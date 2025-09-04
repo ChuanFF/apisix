@@ -51,7 +51,7 @@ local function sort_nodes_cmp(left, right)
     return left.port < right.port
 end
 
-local function on_endpoint_slices_modified(handle, endpoint)
+local function on_endpoint_slices_modified(handle, endpoint, operate)
     if handle.namespace_selector and
             not handle:namespace_selector(endpoint.metadata.namespace) then
         return
@@ -115,9 +115,12 @@ local function on_endpoint_slices_modified(handle, endpoint)
         core.log.error("set endpoint into discovery DICT failed, ", err)
         handle.endpoint_dict:delete(endpoint_key .. "#version")
     end
+    if operate == "list" then
+        handle.current_keys_hash[endpoint_key] = true
+    end
 end
 
-local function on_endpoint_modified(handle, endpoint)
+local function on_endpoint_modified(handle, endpoint, operate)
     if handle.namespace_selector and
             not handle:namespace_selector(endpoint.metadata.namespace) then
         return
@@ -178,6 +181,9 @@ local function on_endpoint_modified(handle, endpoint)
         core.log.error("set endpoint into discovery DICT failed, ", err)
         handle.endpoint_dict:delete(endpoint_key .. "#version")
     end
+    if operate == "list" then
+        handle.current_keys_hash[endpoint_key] = true
+    end
 end
 
 
@@ -195,12 +201,23 @@ end
 
 
 local function pre_list(handle)
-    handle.endpoint_dict:flush_all()
+    handle.current_keys_hash = {}
+    handle.existing_keys = handle.endpoint_dict:get_keys(0)
 end
 
 
 local function post_list(handle)
-    handle.endpoint_dict:flush_expired()
+    if not handle.existing_keys or not handle.current_keys_hash then
+        return
+    end
+    for _, key in ipairs(handle.existing_keys) do
+        if not handle.current_keys_hash[key] then
+            core.log.debug("kubernetes discovery module find dirty data in shared dict, key:", key)
+            handle.endpoint_dict:delete(key)
+        end
+    end
+    handle.existing_keys = nil
+    handle.current_keys_hash = nil
 end
 
 
@@ -369,7 +386,7 @@ local function get_apiserver(conf)
 end
 
 local function create_endpoint_lrucache(endpoint_dict, endpoint_key, endpoint_port)
-    local endpoint_content = endpoint_dict:get_stale(endpoint_key)
+    local endpoint_content = endpoint_dict:get(endpoint_key)
     if not endpoint_content then
         core.log.error("get empty endpoint content from discovery DIC, this should not happen ",
                 endpoint_key)
@@ -497,7 +514,7 @@ local function single_mode_nodes(service_name)
     local endpoint_dict = ctx
     local endpoint_key = match[1]
     local endpoint_port = match[2]
-    local endpoint_version = endpoint_dict:get_stale(endpoint_key .. "#version")
+    local endpoint_version = endpoint_dict:get(endpoint_key .. "#version")
     if not endpoint_version then
         core.log.info("get empty endpoint version from discovery DICT ", endpoint_key)
         return nil
@@ -612,7 +629,7 @@ local function multiple_mode_nodes(service_name)
 
     local endpoint_key = match[2]
     local endpoint_port = match[3]
-    local endpoint_version = endpoint_dict:get_stale(endpoint_key .. "#version")
+    local endpoint_version = endpoint_dict:get(endpoint_key .. "#version")
     if not endpoint_version then
         core.log.info("get empty endpoint version from discovery DICT ", endpoint_key)
         return nil
