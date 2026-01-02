@@ -576,6 +576,12 @@ qr/property \"rate\" validation failed: expected 0 to be greater than 0/
             }
             local key = "counter1"
             for i = 1, 5 do
+                local red, err = redis.new()
+                local ok, err = red:connect("127.0.0.1", 6379)
+                if not ok then
+                    ngx.say("failed to connect: ", err)
+                    return
+                end
                 util.incoming(limiter_conf, red, key, true)
             end
 
