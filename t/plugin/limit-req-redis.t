@@ -659,7 +659,7 @@ qr/property \"rate\" validation failed: expected 0 to be greater than 0/
     location /t {
         content_by_lua_block {
             local redis = require("resty.redis")
-            local limit_req = require("apisix.plugins.limit-req-redis")
+            local limit_req = require("apisix.plugins.limit-req.limit-req-redis")
             local conf = {
                 redis_host = "127.0.0.1",
                 redis_port = 6379,
