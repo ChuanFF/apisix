@@ -651,3 +651,49 @@ passed
 GET /t
 --- response_body eval
 qr/property \"rate\" validation failed: expected 0 to be greater than 0/
+
+
+
+=== TEST 24: verify redis keepalive
+--- config
+    location /t {
+        content_by_lua_block {
+            local redis = require("resty.redis")
+            local limit_req = require("apisix.plugins.limit-req-redis")
+            local conf = {
+                redis_host = "127.0.0.1",
+                redis_port = 6379,
+                rate = 10,
+                burst = 10
+            }
+            local limiter = limit_req.new("limit-req",conf,conf.rate, conf.burst)
+            local key = "counter1"
+            limiter:incoming(key, true)
+
+            -- verify connection reused time
+            local red = redis:new()
+            red:set_timeout(1000)
+            local ok, err = red:connect("127.0.0.1", 6379)
+            if not ok then
+                ngx.say("failed to connect: ", err)
+                return
+            end
+            local reused_time, err = red:get_reused_times()
+            if reused_time == 0 then
+                ngx.say("redis connection is not keepalive")
+            end
+
+            -- Clean up
+            redis_key_prefix = "limit_req" .. ":" .. key
+            local excess_key = redis_key_prefix .. "excess"
+            local last_key = redis_key_prefix .. "last"
+            red:del(excess_key)
+            red:del(last_key)
+            red:close()
+            ngx.say("redis connection has set keepalive")
+        }
+    }
+--- request
+GET /t
+--- response_body
+redis connection has set keepalive
