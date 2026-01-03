@@ -663,6 +663,8 @@ qr/property \"rate\" validation failed: expected 0 to be greater than 0/
             local conf = {
                 redis_host = "127.0.0.1",
                 redis_port = 6379,
+                keepalive_timeout = 10000,
+                keepalive_pool = 100,
                 rate = 10,
                 burst = 10
             }
