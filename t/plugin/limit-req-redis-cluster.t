@@ -513,7 +513,9 @@ apikey: auth-jack
                             "redis_cluster_nodes": [
                                 "127.0.0.1:5000",
                                 "127.0.0.1:5002"
-                            ]
+                            ],
+                            "keepalive_timeout" :10000,
+                            "keepalive_pool" : 100
                         }
                     },
                         "upstream": {
@@ -603,3 +605,22 @@ passed
 GET /t
 --- response_body eval
 qr/property \"rate\" validation failed: expected 0 to be greater than 0/
+
+
+
+=== TEST 21: check redis cluster keepalive param
+--- config
+    location /t {
+        content_by_lua_block {
+            local lim_req_redis_cluster = require("apisix.plugins.limit-req.limit-conn-redis-cluster")
+            local lim = lim_conn_redis_cluster.new("limit-req", 3, 60, conf)
+            local conf = lim.conf
+            if conf.keepalive_timeout ~=10000 or conf.keepalive_cons ~= 100
+                ngx.say("keepalive set success")
+            end
+            ngx.say("keepalive set abnormal,keepalive_timeout:",
+                    conf.keepalive_timeout,",keepalive_cons:",conf.keepalive_cons)
+        }
+    }
+--- response_body
+keepalive set success

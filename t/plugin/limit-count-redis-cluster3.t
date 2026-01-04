@@ -152,6 +152,8 @@ passed
                             "key": "remote_addr",
                             "policy": "redis-cluster",
                             "redis_timeout": 1001,
+                            "keepalive_timeout" :10000,
+                            "keepalive_pool" : 100,
                             "redis_cluster_nodes": [
                                 "$ENV://REDIS_NODE_0",
                                 "$ENV://REDIS_NODE_1"
@@ -183,3 +185,22 @@ passed
 ["GET /hello", "GET /hello", "GET /hello"]
 --- error_code eval
 [200, 200, 503]
+
+
+
+=== TEST 6: check redis cluster keepalive param
+--- config
+    location /t {
+        content_by_lua_block {
+            local lim_count_redis_cluster = require("apisix.plugins.limit-count.limit-count-redis-cluster")
+            local lim = lim_count_redis_cluster.new("limit-count", 3, 60, conf)
+            local conf = lim.conf
+            if conf.keepalive_timeout ~=10000 or conf.keepalive_cons ~= 100
+                ngx.say("keepalive set success")
+            end
+            ngx.say("keepalive set abnormal,keepalive_timeout:",
+                    conf.keepalive_timeout,",keepalive_cons:",conf.keepalive_cons)
+        }
+    }
+--- response_body
+keepalive set success
