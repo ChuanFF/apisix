@@ -613,14 +613,27 @@ qr/property \"rate\" validation failed: expected 0 to be greater than 0/
     location /t {
         content_by_lua_block {
             local lim_req_redis_cluster = require("apisix.plugins.limit-req.limit-conn-redis-cluster")
-            local lim = lim_conn_redis_cluster.new("limit-req", 3, 60, conf)
-            local conf = lim.conf
-            if conf.keepalive_timeout ~=10000 or conf.keepalive_cons ~= 100  then
+            local conf = {
+                rate = 2,
+                burst = 1,
+                key = "consumer_name",
+                policy = "redis-cluster",
+                redis_cluster_name = "test",
+                redis_cluster_nodes = {
+                    "127.0.0.1:5000",
+                    "127.0.0.1:5002"
+                },
+                keepalive_timeout = 10000,
+                keepalive_pool = 100
+            }
+            local lim = lim_req_redis_cluster.new("limit-req", 2, 1, conf)
+            local limit_conf = lim.conf
+            if limit_conf.keepalive_timeout ==10000 and limit_conf.keepalive_cons == 100  then
                 ngx.say("keepalive set success")
                 return
             end
             ngx.say("keepalive set abnormal,keepalive_timeout:",
-                    conf.keepalive_timeout,",keepalive_cons:",conf.keepalive_cons)
+                    limit_conf.keepalive_timeout,",keepalive_cons:",limit_conf.keepalive_cons)
         }
     }
 --- request

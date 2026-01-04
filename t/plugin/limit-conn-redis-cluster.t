@@ -347,14 +347,32 @@ status:503, count:4
     location /t {
         content_by_lua_block {
             local lim_conn_redis_cluster = require("apisix.plugins.limit-conn.limit-conn-redis-cluster")
-            local lim = lim_conn_redis_cluster.new("limit-conn", 3, 60, conf)
-            local conf = lim.conf
-            if conf.keepalive_timeout ~=10000 or conf.keepalive_cons ~= 100 then
+            local conf = {
+                conn = 5,
+                burst = 1,
+                default_conn_delay = 0.1,
+                rejected_code = 503,
+                key = "remote_addr",
+                policy = "redis-cluster",
+                redis_cluster_nodes = {
+                    "127.0.0.1:7001",
+                    "127.0.0.1:7002",
+                    "127.0.0.1:7000"
+                },
+                keepalive_timeout = 10000,
+                keepalive_pool = 100,
+                redis_cluster_name = "redis-cluster-2",
+                redis_cluster_ssl = true,
+                redis_cluster_ssl_verify = false
+            }
+            local lim = lim_conn_redis_cluster.new("limit-conn", 5, 1, conf)
+            local limit_conf = lim.conf
+            if limit_conf.keepalive_timeout ==10000 and limit_conf.keepalive_cons == 100 then
                 ngx.say("keepalive set success")
                 return
             end
             ngx.say("keepalive set abnormal,keepalive_timeout:",
-                    conf.keepalive_timeout,",keepalive_cons:",conf.keepalive_cons)
+                    limit_conf.keepalive_timeout,",keepalive_cons:",limit_conf.keepalive_cons)
         }
     }
 --- request
