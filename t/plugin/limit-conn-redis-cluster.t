@@ -349,8 +349,9 @@ status:503, count:4
             local lim_conn_redis_cluster = require("apisix.plugins.limit-conn.limit-conn-redis-cluster")
             local lim = lim_conn_redis_cluster.new("limit-conn", 3, 60, conf)
             local conf = lim.conf
-            if conf.keepalive_timeout ~=10000 or conf.keepalive_cons ~= 100
+            if conf.keepalive_timeout ~=10000 or conf.keepalive_cons ~= 100 then
                 ngx.say("keepalive set success")
+                return
             end
             ngx.say("keepalive set abnormal,keepalive_timeout:",
                     conf.keepalive_timeout,",keepalive_cons:",conf.keepalive_cons)

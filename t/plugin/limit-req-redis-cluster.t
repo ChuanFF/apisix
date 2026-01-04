@@ -615,8 +615,9 @@ qr/property \"rate\" validation failed: expected 0 to be greater than 0/
             local lim_req_redis_cluster = require("apisix.plugins.limit-req.limit-conn-redis-cluster")
             local lim = lim_conn_redis_cluster.new("limit-req", 3, 60, conf)
             local conf = lim.conf
-            if conf.keepalive_timeout ~=10000 or conf.keepalive_cons ~= 100
+            if conf.keepalive_timeout ~=10000 or conf.keepalive_cons ~= 100  then
                 ngx.say("keepalive set success")
+                return
             end
             ngx.say("keepalive set abnormal,keepalive_timeout:",
                     conf.keepalive_timeout,",keepalive_cons:",conf.keepalive_cons)
