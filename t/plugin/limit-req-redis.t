@@ -151,6 +151,7 @@ passed
     limit_req.origin_incoming = limit_req.incoming
     limit_req.incoming = function(self, key, commit)
         local redis = require("resty.redis")
+        local conf = self.conf
         local delay, err = self:origin_incoming(key, commit)
         if not delay then
             ngx.say("limit fail: ", err)
