@@ -146,6 +146,7 @@ passed
 === TEST 5: verify redis keepalive
 --- extra_init_by_lua
     local limit_req = require("apisix.plugins.limit-req.limit-req-redis")
+    local core = require("apisix.core")
 
     limit_req.origin_incoming = limit_req.incoming
     limit_req.incoming = function(self, key, commit)
@@ -159,17 +160,20 @@ passed
         -- verify connection reused time
         local red,err = redis:new()
         if err then
+            core.log.error("failed to create redis cli: ", err)
             ngx.say("failed to create redis cli: ", err)
             return
         end
         red:set_timeout(1000)
         local ok, err = red:connect(conf.redis_host, conf.redis_port)
         if not ok then
+            core.log.error("failed to connect: ", err)
             ngx.say("failed to connect: ", err)
             return
         end
         local reused_time, err = red:get_reused_times()
         if reused_time == 0 then
+            core.log.error("redis connection is not keepalive")
             ngx.say("redis connection is not keepalive")
             return
         end
