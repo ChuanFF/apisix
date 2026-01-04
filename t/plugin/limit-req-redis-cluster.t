@@ -622,5 +622,7 @@ qr/property \"rate\" validation failed: expected 0 to be greater than 0/
                     conf.keepalive_timeout,",keepalive_cons:",conf.keepalive_cons)
         }
     }
+--- request
+GET /t
 --- response_body
 keepalive set success

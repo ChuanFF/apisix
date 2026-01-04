@@ -356,5 +356,7 @@ status:503, count:4
                     conf.keepalive_timeout,",keepalive_cons:",conf.keepalive_cons)
         }
     }
+--- request
+GET /t
 --- response_body
 keepalive set success
