@@ -626,7 +626,7 @@ qr/property \"rate\" validation failed: expected 0 to be greater than 0/
                 keepalive_timeout = 10000,
                 keepalive_pool = 100
             }
-            local lim = lim_req_redis_cluster.new("limit-req", 2, 1, conf)
+            local lim = lim_req_redis_cluster.new("limit-req", conf, 2, 1)
             local limit_conf = lim.conf
             if limit_conf.keepalive_timeout ==10000 and limit_conf.keepalive_cons == 100  then
                 ngx.say("keepalive set success")
