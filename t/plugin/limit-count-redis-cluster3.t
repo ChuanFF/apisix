@@ -193,7 +193,7 @@ passed
     location /t {
         content_by_lua_block {
             local lim_count_redis_cluster = require("apisix.plugins.limit-count.limit-count-redis-cluster")
-            local config = {
+            local conf = {
                 count = 2,
                 time_window = 60,
                 rejected_code = 503,
