@@ -365,7 +365,7 @@ status:503, count:4
                 redis_cluster_ssl = true,
                 redis_cluster_ssl_verify = false
             }
-            local lim = lim_conn_redis_cluster.new("limit-conn", 5, 1, conf)
+            local lim = lim_conn_redis_cluster.new("limit-conn", conf, 5, 1)
             local limit_conf = lim.conf
             if limit_conf.keepalive_timeout ==10000 and limit_conf.keepalive_cons == 100 then
                 ngx.say("keepalive set success")
