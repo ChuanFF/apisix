@@ -207,7 +207,7 @@ passed
                 },
                 redis_cluster_name = "redis-cluster-1"
             }
-            local lim = lim_count_redis_cluster.new("limit-count", 2, 60, conf)
+            local lim = lim_count_redis_cluster.new("limit-count", conf, 2, 60)
             local limit_conf = lim.conf
             if limit_conf.keepalive_timeout ==10000 and limit_conf.keepalive_cons == 100 then
                 ngx.say("keepalive set success")
