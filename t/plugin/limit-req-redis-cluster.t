@@ -608,7 +608,7 @@ qr/property \"rate\" validation failed: expected 0 to be greater than 0/
 
 
 
-=== TEST 21: check redis cluster keepalive param
+=== TEST 22: check redis cluster keepalive param
 --- config
     location /t {
         content_by_lua_block {
@@ -627,13 +627,13 @@ qr/property \"rate\" validation failed: expected 0 to be greater than 0/
                 keepalive_pool = 100
             }
             local lim = lim_req_redis_cluster.new("limit-req", conf, 2, 1)
-            local limit_conf = lim.conf
-            if limit_conf.keepalive_timeout ==10000 and limit_conf.keepalive_cons == 100  then
+            local redis_conf = lim.red_cli.config 
+            if redis_conf.keepalive_timeout ==10000 and redis_conf.keepalive_cons == 100  then
                 ngx.say("keepalive set success")
                 return
             end
             ngx.say("keepalive set abnormal,keepalive_timeout:",
-                    limit_conf.keepalive_timeout,",keepalive_cons:",limit_conf.keepalive_cons)
+                    redis_conf.keepalive_timeout,",keepalive_cons:",redis_conf.keepalive_cons)
         }
     }
 --- request
