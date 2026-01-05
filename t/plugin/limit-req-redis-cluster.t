@@ -612,7 +612,7 @@ qr/property \"rate\" validation failed: expected 0 to be greater than 0/
 --- config
     location /t {
         content_by_lua_block {
-            local lim_req_redis_cluster = require("apisix.plugins.limit-req.limit-conn-redis-cluster")
+            local lim_req_redis_cluster = require("apisix.plugins.limit-req.limit-req-redis-cluster")
             local conf = {
                 rate = 2,
                 burst = 1,
