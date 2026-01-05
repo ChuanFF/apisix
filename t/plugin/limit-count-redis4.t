@@ -152,6 +152,7 @@ passed
                             "time_window": 1,
                             "rejected_code": 503,
                             "key": "remote_addr",
+                            "show_limit_quota_header":false,
                             "policy": "redis",
                             "redis_host": "$ENV://REDIS_HOST"
                         }
