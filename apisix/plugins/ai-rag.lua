@@ -142,7 +142,11 @@ function _M.access(conf, ctx)
         role = "user",
         content = res
     }
-    core.table.insert_tail(body_tab.messages, augment)
+    if #body_tab.messages > 0 then
+        core.table.insert(body_tab.messages, #body_tab.messages, augment)
+    else
+        core.table.insert_tail(body_tab.messages, augment)
+    end
 
     local req_body_json, err = core.json.encode(body_tab)
     if not req_body_json then
