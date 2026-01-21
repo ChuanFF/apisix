@@ -332,7 +332,7 @@ POST /echo
 {"ai_rag":{"vector_search":{"fields":"something"},"embeddings":{"missinginput":"which service is good for devops"}}}
 --- error_code: 400
 --- error_log
-request body fails schema check: property "ai_rag" validation failed: property "embeddings" validation failed: property "input" is required
+missing embedding input
 
 
 
@@ -390,3 +390,13 @@ POST /echo
 --- error_code: 200
 --- response_body eval
 qr/\{"messages":\[\{"content":"passed","role":"user"\}\]\}|\{"messages":\[\{"role":"user","content":"passed"\}\]\}/
+
+
+
+=== TEST 13: send request with embedding input missing but present in messages
+--- request
+POST /echo
+{"messages":[{"role":"user","content":"tell me about devops"}],"ai_rag":{"vector_search":{"fields":"something"},"embeddings":{"dimensions":1024}}}
+--- error_code: 200
+--- response_body eval
+qr/\{"messages":\[\{"content":"passed","role":"user"\},\{"content":"tell me about devops","role":"user"\}\]\}|\{"messages":\[\{"role":"user","content":"passed"\},\{"role":"user","content":"tell me about devops"\}\]\}/

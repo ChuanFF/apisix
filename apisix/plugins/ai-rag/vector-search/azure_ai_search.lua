@@ -29,8 +29,12 @@ _M.schema = {
         api_key = {
             type = "string",
         },
+        fields = {
+            type = "string",
+            description = "Comma-separated list of fields to retrieve"
+        }
     },
-    required = {"endpoint", "api_key"}
+    required = {"endpoint", "api_key", "fields"}
 }
 
 
@@ -40,7 +44,8 @@ function _M.search(conf, search_body, httpc)
             {
                 kind = "vector",
                 vector = search_body.embeddings,
-                fields = search_body.fields
+                fields = conf.fields,
+                k = search_body.k
             }
         }
     }
@@ -66,18 +71,12 @@ function _M.search(conf, search_body, httpc)
         return nil, res.status, res.body
     end
 
-    return res.body
+    local res_tab, err = core.json.decode(res.body)
+    if not res_tab then
+        return nil, HTTP_INTERNAL_SERVER_ERROR, err
+    end
+
+    return res_tab.value
 end
-
-
-_M.request_schema = {
-    type = "object",
-    properties = {
-        fields = {
-            type = "string"
-        }
-    },
-    required = { "fields" }
-}
 
 return _M

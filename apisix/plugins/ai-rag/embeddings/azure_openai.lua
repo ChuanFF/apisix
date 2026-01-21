@@ -34,7 +34,10 @@ _M.schema = {
     required = { "endpoint", "api_key" }
 }
 
-function _M.get_embeddings(conf, body, httpc)
+function _M.get_embeddings(conf, input, httpc)
+    local body = {
+        input = input
+    }
     local body_tab, err = core.json.encode(body)
     if not body_tab then
         return nil, HTTP_INTERNAL_SERVER_ERROR, err
@@ -66,23 +69,8 @@ function _M.get_embeddings(conf, body, httpc)
         return nil, HTTP_INTERNAL_SERVER_ERROR, res.body
     end
 
-    local embeddings, err = core.json.encode(res_tab.data[1].embedding)
-    if not embeddings then
-        return nil, HTTP_INTERNAL_SERVER_ERROR, err
-    end
-
+    -- Return the embedding vector of the first element
     return res_tab.data[1].embedding
 end
-
-
-_M.request_schema = {
-    type = "object",
-    properties = {
-        input = {
-            type = "string"
-        }
-    },
-    required = { "input" }
-}
 
 return _M
