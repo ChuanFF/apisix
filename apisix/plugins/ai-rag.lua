@@ -133,34 +133,21 @@ local function rerank_docs(conf, docs, query, httpc)
         return docs
     end
 
-    -- Construct prompt for rerank
-    local doc_list_str = ""
-    for i, doc in ipairs(docs) do
-        -- Assuming doc is a table with 'content' or just a string?
-        -- Azure Search returns table with content?
-        -- azure_ai_search.lua returns res_tab.value which is a list of objects.
-        -- Each object usually has 'content' field or similar.
-        -- But we don't know the field name for sure.
-        -- But let's assume it's JSON serialization of the doc.
-        local doc_content = doc.content or core.json.encode(doc)
-        doc_list_str = doc_list_str .. string.format("%d. %s\n", i, doc_content)
+    -- Construct documents for Cohere Rerank API
+    local documents = {}
+    for _, doc in ipairs(docs) do
+        local doc_content = doc
+        if type(doc) == "table" then
+            doc_content = doc.content or core.json.encode(doc)
+        end
+        core.table.insert(documents, doc_content)
     end
 
-    local prompt = string.format([[
-Query: %s
-
-Documents:
-%s
-
-Please rank the documents by relevance to the query. Return the indices of the top %d documents as a JSON array of integers, e.g. [1, 3]. Do not return any other text.
-]], query, doc_list_str, top_n)
-
     local body = {
-        messages = {
-            { role = "user", content = prompt }
-        },
         model = conf.model,
-        temperature = 0
+        query = query,
+        top_n = top_n,
+        documents = documents
     }
 
     local body_str, err = core.json.encode(body)
@@ -184,28 +171,18 @@ Please rank the documents by relevance to the query. Return the indices of the t
     end
 
     local res_body = core.json.decode(res.body)
-    if not res_body or not res_body.choices or #res_body.choices == 0 then
-        return docs
-    end
-
-    local content = res_body.choices[1].message.content
-    local indices = core.json.decode(content)
-    if not indices or type(indices) ~= "table" then
-        -- Try to find array in text
-        local s, e = string.find(content, "%[.*%]")
-        if s then
-            indices = core.json.decode(string.sub(content, s, e))
-        end
-    end
-
-    if not indices or type(indices) ~= "table" then
-        core.log.error("failed to parse rerank indices: ", content)
+    if not res_body or not res_body.results then
         return docs
     end
 
     local new_docs = {}
-    for _, idx in ipairs(indices) do
-        local doc = docs[tonumber(idx)]
+    for _, result in ipairs(res_body.results) do
+        -- Cohere returns 0-based index?
+        -- API docs say "index: The index of the document in the original list."
+        -- Python client uses 0-based.
+        -- Let's assume API returns 0-based index. Lua is 1-based.
+        local idx = result.index + 1
+        local doc = docs[idx]
         if doc then
             core.table.insert(new_docs, doc)
         end
