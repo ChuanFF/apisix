@@ -15,6 +15,7 @@
 -- limitations under the License.
 --
 local core = require("apisix.core")
+local http = require("resty.http")
 local HTTP_INTERNAL_SERVER_ERROR = ngx.HTTP_INTERNAL_SERVER_ERROR
 local HTTP_OK = ngx.HTTP_OK
 
@@ -38,7 +39,7 @@ _M.schema = {
 }
 
 
-function _M.search(conf, search_body, httpc)
+function _M.search(conf, search_body)
     local body = {
         vectorQueries = {
             {
@@ -54,6 +55,7 @@ function _M.search(conf, search_body, httpc)
         return nil, HTTP_INTERNAL_SERVER_ERROR, err
     end
 
+    local httpc = http.new()
     local res, err = httpc:request_uri(conf.endpoint, {
         method = "POST",
         headers = {

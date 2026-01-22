@@ -15,6 +15,7 @@
 -- limitations under the License.
 --
 local core = require("apisix.core")
+local http = require("resty.http")
 local HTTP_INTERNAL_SERVER_ERROR = ngx.HTTP_INTERNAL_SERVER_ERROR
 local HTTP_OK = ngx.HTTP_OK
 local type = type
@@ -34,7 +35,7 @@ _M.schema = {
     required = { "endpoint", "api_key" }
 }
 
-function _M.get_embeddings(conf, input, httpc)
+function _M.get_embeddings(conf, input)
     local body = {
         input = input
     }
@@ -43,6 +44,7 @@ function _M.get_embeddings(conf, input, httpc)
         return nil, HTTP_INTERNAL_SERVER_ERROR, err
     end
 
+    local httpc = http.new()
     local res, err = httpc:request_uri(conf.endpoint, {
         method = "POST",
         headers = {

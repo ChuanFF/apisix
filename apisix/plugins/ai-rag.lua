@@ -20,12 +20,12 @@ local ngx_req = ngx.req
 local table   = table
 local string  = string
 
-local http     = require("resty.http")
 local core     = require("apisix.core")
 
 local azure_openai_embeddings = require("apisix.plugins.ai-rag.embeddings.azure_openai").schema
 local openai_embeddings = require("apisix.plugins.ai-rag.embeddings.openai").schema
 local azure_ai_search_schema = require("apisix.plugins.ai-rag.vector-search.azure_ai_search").schema
+local cohere_rerank_schema = require("apisix.plugins.ai-rag.rerank.cohere").schema
 
 local HTTP_INTERNAL_SERVER_ERROR = ngx.HTTP_INTERNAL_SERVER_ERROR
 local HTTP_BAD_REQUEST = ngx.HTTP_BAD_REQUEST
@@ -50,6 +50,13 @@ local schema = {
             maxProperties = 1,
             minProperties = 1,
         },
+        rerank_provider = {
+            type = "object",
+            properties = {
+                cohere = cohere_rerank_schema
+            },
+            maxProperties = 1,
+        },
         rag_config = {
             type = "object",
             properties = {
@@ -63,17 +70,6 @@ local schema = {
                     minimum = 1,
                     default = 5
                 },
-                rerank = {
-                    type = "object",
-                    properties = {
-                        enabled = { type = "boolean", default = false },
-                        endpoint = { type = "string" },
-                        api_key = { type = "string" },
-                        model = { type = "string" },
-                        top_n = { type = "integer", minimum = 1 }
-                    },
-                    required = { "enabled" }
-                }
             },
             default = {}
         }
@@ -119,81 +115,8 @@ local function get_input_text(messages, strategy)
     return nil
 end
 
-local function rerank_docs(conf, docs, query, httpc)
-    if not conf.enabled then
-        return docs
-    end
-
-    if not docs or #docs == 0 then
-        return docs
-    end
-
-    local top_n = conf.top_n or 3
-    if #docs <= top_n then
-        return docs
-    end
-
-    -- Construct documents for Cohere Rerank API
-    local documents = {}
-    for _, doc in ipairs(docs) do
-        local doc_content = doc
-        if type(doc) == "table" then
-            doc_content = doc.content or core.json.encode(doc)
-        end
-        core.table.insert(documents, doc_content)
-    end
-
-    local body = {
-        model = conf.model,
-        query = query,
-        top_n = top_n,
-        documents = documents
-    }
-
-    local body_str, err = core.json.encode(body)
-    if not body_str then
-        core.log.error("failed to encode rerank body: ", err)
-        return docs -- fallback
-    end
-
-    local res, err = httpc:request_uri(conf.endpoint, {
-        method = "POST",
-        headers = {
-            ["Content-Type"] = "application/json",
-            ["Authorization"] = "Bearer " .. conf.api_key
-        },
-        body = body_str
-    })
-
-    if not res or res.status ~= 200 then
-        core.log.error("rerank failed: ", err or (res and res.status))
-        return docs -- fallback
-    end
-
-    local res_body = core.json.decode(res.body)
-    if not res_body or not res_body.results then
-        return docs
-    end
-
-    local new_docs = {}
-    for _, result in ipairs(res_body.results) do
-        -- Cohere returns 0-based index?
-        -- API docs say "index: The index of the document in the original list."
-        -- Python client uses 0-based.
-        -- Let's assume API returns 0-based index. Lua is 1-based.
-        local idx = result.index + 1
-        local doc = docs[idx]
-        if doc then
-            core.table.insert(new_docs, doc)
-        end
-    end
-
-    return new_docs
-end
-
 
 function _M.access(conf, ctx)
-    local httpc = http.new()
     local body_tab, err = core.request.get_json_request_body_table()
     if not body_tab then
         return HTTP_BAD_REQUEST, err
@@ -211,6 +134,17 @@ function _M.access(conf, ctx)
     local vector_search_driver = require("apisix.plugins.ai-rag.vector-search." ..
                                         vector_search_provider)
 
+    local rerank_provider
+    local rerank_provider_conf
+    local rerank_driver
+    if conf.rerank_provider then
+        rerank_provider = next(conf.rerank_provider)
+        if rerank_provider then
+            rerank_provider_conf = conf.rerank_provider[rerank_provider]
+            rerank_driver = require("apisix.plugins.ai-rag.rerank." .. rerank_provider)
+        end
+    end
+
     -- 1. Extract Input
     local rag_conf = conf.rag_config or {}
     local input_strategy = rag_conf.input_strategy or "last"
@@ -223,7 +157,7 @@ function _M.access(conf, ctx)
 
     -- 2. Get Embeddings
     local embeddings, status, err = embeddings_driver.get_embeddings(embeddings_provider_conf,
-                                                        input_text, httpc)
+                                                        input_text)
     if not embeddings then
         core.log.error("could not get embeddings: ", err)
         return status, err
@@ -237,15 +171,15 @@ function _M.access(conf, ctx)
     -- fields is now in vector_search_provider_conf
 
     local docs, status, err = vector_search_driver.search(vector_search_provider_conf,
-                                                        search_body, httpc)
+                                                        search_body)
     if not docs then
         core.log.error("could not get vector_search result: ", err)
         return status, err
     end
 
     -- 4. Rerank
-    if rag_conf.rerank and rag_conf.rerank.enabled then
-        docs = rerank_docs(rag_conf.rerank, docs, input_text, httpc)
+    if rerank_driver then
+        docs = rerank_driver.rerank(rerank_provider_conf, docs, input_text)
     end
 
     -- 5. Inject Context
