@@ -14,11 +14,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 --
-local core = require("apisix.core")
-local http = require("resty.http")
-local HTTP_INTERNAL_SERVER_ERROR = ngx.HTTP_INTERNAL_SERVER_ERROR
-local HTTP_OK = ngx.HTTP_OK
-local type = type
+local utils = require("apisix.plugins.ai-rag.utils")
 
 local _M = {}
 
@@ -48,52 +44,17 @@ _M.schema = {
 }
 
 function _M.get_embeddings(conf, input)
-    local req_body = {
+    local headers = {
+        ["Content-Type"] = "application/json",
+        ["Authorization"] = "Bearer " .. conf.api_key,
+    }
+    local body = {
         input = input,
         model = conf.model,
+        dimensions = conf.dimensions,
+        user = conf.user,
     }
-
-    if conf.dimensions then
-        req_body.dimensions = conf.dimensions
-    end
-    if conf.user then
-        req_body.user = conf.user
-    end
-
-    local body_str, err = core.json.encode(req_body)
-    if not body_str then
-        return nil, HTTP_INTERNAL_SERVER_ERROR, err
-    end
-
-    local httpc = http.new()
-    local res, err = httpc:request_uri(conf.endpoint, {
-        method = "POST",
-        headers = {
-            ["Content-Type"] = "application/json",
-            ["Authorization"] = "Bearer " .. conf.api_key,
-        },
-        body = body_str
-    })
-
-    if not res or not res.body then
-        return nil, HTTP_INTERNAL_SERVER_ERROR, err
-    end
-
-    if res.status ~= HTTP_OK then
-        return nil, res.status, res.body
-    end
-
-    local res_tab, err = core.json.decode(res.body)
-    if not res_tab then
-        return nil, HTTP_INTERNAL_SERVER_ERROR, err
-    end
-
-    if type(res_tab.data) ~= "table" or core.table.isempty(res_tab.data) then
-        return nil, HTTP_INTERNAL_SERVER_ERROR, res.body
-    end
-
-    -- Return the embedding vector of the first element (assuming single input)
-    return res_tab.data[1].embedding
+    return utils.get_openai_embedding(conf.endpoint, headers, body)
 end
 
 return _M

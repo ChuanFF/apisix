@@ -14,11 +14,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 --
-local core = require("apisix.core")
-local http = require("resty.http")
-local HTTP_INTERNAL_SERVER_ERROR = ngx.HTTP_INTERNAL_SERVER_ERROR
-local HTTP_OK = ngx.HTTP_OK
-local type = type
+local utils = require("apisix.plugins.ai-rag.utils")
 
 local _M = {}
 
@@ -36,43 +32,14 @@ _M.schema = {
 }
 
 function _M.get_embeddings(conf, input)
+    local headers = {
+        ["Content-Type"] = "application/json",
+        ["api-key"] = conf.api_key,
+    }
     local body = {
         input = input
     }
-    local body_tab, err = core.json.encode(body)
-    if not body_tab then
-        return nil, HTTP_INTERNAL_SERVER_ERROR, err
-    end
-
-    local httpc = http.new()
-    local res, err = httpc:request_uri(conf.endpoint, {
-        method = "POST",
-        headers = {
-            ["Content-Type"] = "application/json",
-            ["api-key"] = conf.api_key,
-        },
-        body = body_tab
-    })
-
-    if not res or not res.body then
-        return nil, HTTP_INTERNAL_SERVER_ERROR, err
-    end
-
-    if res.status ~= HTTP_OK then
-        return nil, res.status, res.body
-    end
-
-    local res_tab, err = core.json.decode(res.body)
-    if not res_tab then
-        return nil, HTTP_INTERNAL_SERVER_ERROR, err
-    end
-
-    if type(res_tab.data) ~= "table" or core.table.isempty(res_tab.data) then
-        return nil, HTTP_INTERNAL_SERVER_ERROR, res.body
-    end
-
-    -- Return the embedding vector of the first element
-    return res_tab.data[1].embedding
+    return utils.get_openai_embedding(conf.endpoint, headers, body)
 end
 
 return _M
