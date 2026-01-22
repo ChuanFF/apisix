@@ -30,6 +30,10 @@ local cohere_rerank_schema = require("apisix.plugins.ai-rag.rerank.cohere").sche
 local HTTP_INTERNAL_SERVER_ERROR = ngx.HTTP_INTERNAL_SERVER_ERROR
 local HTTP_BAD_REQUEST = ngx.HTTP_BAD_REQUEST
 
+local lru_embeddings_drivers = {}
+local lru_vector_search_drivers = {}
+local lru_rerank_drivers = {}
+
 local schema = {
     type = "object",
     properties = {
@@ -127,12 +131,20 @@ function _M.access(conf, ctx)
 
     local embeddings_provider = next(conf.embeddings_provider)
     local embeddings_provider_conf = conf.embeddings_provider[embeddings_provider]
-    local embeddings_driver = require("apisix.plugins.ai-rag.embeddings." .. embeddings_provider)
+    local embeddings_driver = lru_embeddings_drivers[embeddings_provider]
+    if not embeddings_driver then
+        embeddings_driver = require("apisix.plugins.ai-rag.embeddings." .. embeddings_provider)
+        lru_embeddings_drivers[embeddings_provider] = embeddings_driver
+    end
 
     local vector_search_provider = next(conf.vector_search_provider)
     local vector_search_provider_conf = conf.vector_search_provider[vector_search_provider]
-    local vector_search_driver = require("apisix.plugins.ai-rag.vector-search." ..
-                                        vector_search_provider)
+    local vector_search_driver = lru_vector_search_drivers[vector_search_provider]
+    if not vector_search_driver then
+        vector_search_driver = require("apisix.plugins.ai-rag.vector-search." ..
+                                            vector_search_provider)
+        lru_vector_search_drivers[vector_search_provider] = vector_search_driver
+    end
 
     local rerank_provider
     local rerank_provider_conf
@@ -141,7 +153,11 @@ function _M.access(conf, ctx)
         rerank_provider = next(conf.rerank_provider)
         if rerank_provider then
             rerank_provider_conf = conf.rerank_provider[rerank_provider]
-            rerank_driver = require("apisix.plugins.ai-rag.rerank." .. rerank_provider)
+            rerank_driver = lru_rerank_drivers[rerank_provider]
+            if not rerank_driver then
+                rerank_driver = require("apisix.plugins.ai-rag.rerank." .. rerank_provider)
+                lru_rerank_drivers[rerank_provider] = rerank_driver
+            end
         end
     end
 
