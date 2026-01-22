@@ -146,21 +146,6 @@ function _M.access(conf, ctx)
         lru_vector_search_drivers[vector_search_provider] = vector_search_driver
     end
 
-    local rerank_provider
-    local rerank_provider_conf
-    local rerank_driver
-    if conf.rerank_provider then
-        rerank_provider = next(conf.rerank_provider)
-        if rerank_provider then
-            rerank_provider_conf = conf.rerank_provider[rerank_provider]
-            rerank_driver = lru_rerank_drivers[rerank_provider]
-            if not rerank_driver then
-                rerank_driver = require("apisix.plugins.ai-rag.rerank." .. rerank_provider)
-                lru_rerank_drivers[rerank_provider] = rerank_driver
-            end
-        end
-    end
-
     -- 1. Extract Input
     local rag_conf = conf.rag_config or {}
     local input_strategy = rag_conf.input_strategy or "last"
@@ -194,8 +179,16 @@ function _M.access(conf, ctx)
     end
 
     -- 4. Rerank
-    if rerank_driver then
+    if conf.rerank_provider then
+        local rerank_provider = next(conf.rerank_provider)
+        local rerank_provider_conf = conf.rerank_provider[rerank_provider]
+        local rerank_driver = lru_rerank_drivers[rerank_provider]
+        if not rerank_driver then
+            rerank_driver = require("apisix.plugins.ai-rag.rerank." .. rerank_provider)
+            lru_rerank_drivers[rerank_provider] = rerank_driver
+        end
         docs = rerank_driver.rerank(rerank_provider_conf, docs, input_text)
+
     end
 
     -- 5. Inject Context
