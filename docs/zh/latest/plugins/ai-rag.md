@@ -139,17 +139,17 @@ curl "http://127.0.0.1:9180/apisix/admin/routes" -X PUT \
       "vector_search_provider": {
         "azure_ai_search": {
           "endpoint": "'"$AZ_AI_SEARCH_ENDPOINT"'",
-          "api_key": "'"$AZ_AI_SEARCH_KEY"'"
+          "api_key": "'"$AZ_AI_SEARCH_KEY"'",
           "fields": "contentVector",
-          "select": "content"
+          "select": "content",
           "k": 10
         }
       },
       "rerank_provider": {
         "cohere": {
-            "endpoint":"$COHERE_DOMAIN",
-            "api_key": "$COHERE_API_KEY",
-            "model": "$COHERE_MODEL",
+            "endpoint":"'"$COHERE_DOMAIN"'",
+            "api_key": "'"$COHERE_API_KEY"'",
+            "model": ""'"COHERE_MODEL"'",
             "top_n": 3
         }
       }
