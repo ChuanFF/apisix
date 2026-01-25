@@ -26,9 +26,11 @@ _M.schema = {
     properties = {
         endpoint = {
             type = "string",
+            description = "The endpoint for the Azure AI Search service."
         },
         api_key = {
             type = "string",
+            description = "The API key for authentication."
         },
         fields = {
             type = "string",
@@ -36,7 +38,8 @@ _M.schema = {
         },
         exhaustive = {
             type = "boolean",
-            default = true
+            default = true,
+            description = "Whether to perform an exhaustive search."
         },
         select = {
             type = "string",

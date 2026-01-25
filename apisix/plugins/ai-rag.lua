@@ -49,6 +49,7 @@ local schema = {
             },
             maxProperties = 1,
             minProperties = 1,
+            description = "Configuration for the embeddings provider, such as OpenAI."
         },
         vector_search_provider = {
             type = "object",
@@ -57,6 +58,7 @@ local schema = {
             },
             maxProperties = 1,
             minProperties = 1,
+            description = "Configuration for the vector search provider, such as Azure AI Search."
         },
         rerank_provider = {
             type = "object",
@@ -65,6 +67,7 @@ local schema = {
             },
             minProperties = 1,
             maxProperties = 1,
+            description = "Configuration for the rerank provider, such as Cohere."
         },
         rag_config = {
             type = "object",
@@ -72,10 +75,14 @@ local schema = {
                 input_strategy = {
                     type = "string",
                     enum = { input_strategy.last, input_strategy.all},
-                    default = input_strategy.last
+                    default = input_strategy.last,
+                    description = "Strategy for extracting input text from messages.
+                            'last' uses the last user message,
+                            'all' concatenates all user messages."
                 }
             },
-            default = {}
+            default = {},
+            description = "General configuration for the RAG process."
         }
     },
     required = { "embeddings_provider", "vector_search_provider" }

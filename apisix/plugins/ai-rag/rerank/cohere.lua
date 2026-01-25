@@ -28,18 +28,22 @@ _M.schema = {
         endpoint = {
             type = "string",
             default = "https://api.cohere.ai/v1/rerank",
+            description = "The endpoint for the Cohere Rerank API."
         },
         api_key = {
             type = "string",
+            description = "The API key for authentication."
         },
         model = {
             type = "string",
             default = "rerank-english-v2.0",
+            description = "The model to use for reranking."
         },
         top_n = {
             type = "integer",
             minimum = 1,
-            default = 3
+            default = 3,
+            description = "The number of top results to return."
         }
     },
     required = { "api_key" }

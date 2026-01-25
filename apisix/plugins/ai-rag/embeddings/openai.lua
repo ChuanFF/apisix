@@ -28,17 +28,21 @@ _M.schema = {
         endpoint = {
             type = "string",
             default = "https://api.openai.com/v1/embeddings",
+            description = "The endpoint for the OpenAI embeddings API."
         },
         api_key = {
             type = "string",
+            description = "The API key for authentication."
         },
         model = {
             type = "string",
             default = "text-embedding-3-large",
+            description = "The model to use for generating embeddings."
         },
         dimensions = {
             type = "integer",
             minimum = 1,
+            description = "The number of dimensions for the embeddings."
         }
     },
     required = { "api_key" }
