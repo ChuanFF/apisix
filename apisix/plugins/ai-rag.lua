@@ -143,15 +143,17 @@ end
 
 
 local function inject_context_into_messages(messages, docs)
-    local context_str = ""
+    local context_parts = {}
     for _, doc in ipairs(docs) do
         local content = doc.content or core.json.encode(doc)
-        context_str = context_str .. content .. "\n\n"
+        core.table.insert(context_parts, content)
     end
 
-    if context_str == "" then
+    if #context_parts == 0 then
         return
     end
+
+    local context_str = core.table.concat(context_parts, "\n\n")
 
     local augment = {
         role = "user",
