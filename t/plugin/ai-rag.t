@@ -413,7 +413,8 @@ qr/Apache APISIX is a dynamic/
                             "rerank_provider": {
                                 "cohere": {
                                     "endpoint": "http://127.0.0.1:3623/rerank",
-                                    "api_key": "correct-key"
+                                    "api_key": "correct-key",
+                                    "top_n": 1
                                 }
                             }
                         }
