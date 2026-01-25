@@ -18,7 +18,6 @@ local next    = next
 local require = require
 local ngx_req = ngx.req
 local table   = table
-local string  = string
 local ipairs  = ipairs
 
 local core     = require("apisix.core")
