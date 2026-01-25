@@ -487,5 +487,5 @@ POST /echo
 }
 --- error_log
 Number of documents retrieved: 1
---- response_body
+--- response_body eval
 qr/Apache APISIX is a dynamic, real-time, high-performance API Gateway.*What is Apache APISIX/
