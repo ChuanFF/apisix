@@ -154,6 +154,8 @@ local function inject_context_into_messages(messages, docs)
     }
 
     if #messages > 0 then
+        -- Insert context before the last message (which is typically the user's latest query)
+        -- to ensure the LLM considers the context relevant to the immediate question.
         core.table.insert(messages, #messages, augment)
     else
         core.table.insert_tail(messages, augment)
