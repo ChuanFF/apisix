@@ -163,23 +163,15 @@ end
 
 
 local function inject_context_into_messages(messages, docs)
-    local context_parts = {}
-    for _, doc in ipairs(docs) do
-        local content = doc.content or core.json.encode(doc)
-        core.table.insert(context_parts, content)
-    end
-
-    if #context_parts == 0 then
+    if not docs or #docs == 0 then
         return
     end
 
-    local context_str = core.table.concat(context_parts, "\n\n")
-
+    local context_str = core.table.concat(docs, "\n\n")
     local augment = {
         role = "user",
         content = "Context:\n" .. context_str
     }
-
     if #messages > 0 then
         -- Insert context before the last message (which is typically the user's latest query)
         -- to ensure the LLM considers the context relevant to the immediate question.
