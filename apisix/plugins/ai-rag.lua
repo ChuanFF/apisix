@@ -54,7 +54,7 @@ local schema = {
         vector_search_provider = {
             type = "object",
             properties = {
-                azure_ai_search = azure_ai_search_schema
+                ["azure-ai-search"] = azure_ai_search_schema
             },
             maxProperties = 1,
             minProperties = 1,

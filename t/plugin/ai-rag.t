@@ -167,7 +167,7 @@ __DATA__
             local plugin = require("apisix.plugins.ai-rag")
             local ok, err = plugin.check_schema({
                 vector_search_provider = {
-                    azure_ai_search = {
+                    ["azure-ai-search"] = {
                         endpoint = "http://127.0.0.1:3623/search",
                         api_key = "key"
                     }
@@ -224,7 +224,7 @@ property "vector_search_provider" is required
                                 }
                             },
                             "vector_search_provider": {
-                                "azure_ai_search": {
+                                ["azure-ai-search"]: {
                                     "endpoint": "http://127.0.0.1:3623/indexes/rag-apisix/docs/search",
                                     "api_key": "correct-key",
                                     "fields": "text_vector",
@@ -285,7 +285,7 @@ could not get embeddings
                                 }
                             },
                             "vector_search_provider": {
-                                "azure_ai_search": {
+                                ["azure-ai-search"]: {
                                     "endpoint": "http://127.0.0.1:3623/indexes/rag-apisix/docs/search",
                                     "api_key": "wrong-key",
                                     "fields": "text_vector",
@@ -346,7 +346,7 @@ could not get vector_search result
                                 }
                             },
                             "vector_search_provider": {
-                                "azure_ai_search": {
+                                ["azure-ai-search"]: {
                                     "endpoint": "http://127.0.0.1:3623/indexes/rag-apisix/docs/search",
                                     "api_key": "correct-key",
                                     "fields": "text_vector",
@@ -404,7 +404,7 @@ qr/Apache APISIX is a dynamic/
                                 }
                             },
                             "vector_search_provider": {
-                                "azure_ai_search": {
+                                ["azure-ai-search"]: {
                                     "endpoint": "http://127.0.0.1:3623/indexes/rag-apisix/docs/search",
                                     "api_key": "correct-key",
                                     "fields": "text_vector",
