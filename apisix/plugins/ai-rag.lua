@@ -19,6 +19,7 @@ local require = require
 local ngx_req = ngx.req
 local table   = table
 local string  = string
+local ipairs  = ipairs
 
 local core     = require("apisix.core")
 
@@ -119,31 +120,51 @@ local function get_input_text(messages, strategy)
 end
 
 
+local function load_driver(category, name, cache)
+    local driver = cache[name]
+    if driver then
+        return driver
+    end
+
+    local pkg_path = "apisix.plugins.ai-rag." .. category .. "." .. name
+    local ok, mod = pcall(require, pkg_path)
+    if not ok then
+        return nil, "failed to load module " .. pkg_path .. ", err: " .. tostring(mod)
+    end
+
+    cache[name] = mod
+    return mod
+end
+
+
+local function inject_context_into_messages(messages, docs)
+    local context_str = ""
+    for _, doc in ipairs(docs) do
+        local content = doc.content or core.json.encode(doc)
+        context_str = context_str .. content .. "\n\n"
+    end
+
+    if context_str == "" then
+        return
+    end
+
+    local augment = {
+        role = "user",
+        content = "Context:\n" .. context_str
+    }
+
+    if #messages > 0 then
+        core.table.insert(messages, #messages, augment)
+    else
+        core.table.insert_tail(messages, augment)
+    end
+end
+
+
 function _M.access(conf, ctx)
     local body_tab, err = core.request.get_json_request_body_table()
     if not body_tab then
         return HTTP_BAD_REQUEST, err
-    end
-
-    -- We now assume request body is standard OpenAI chat completion body
-    -- so we don't look for ai_rag field anymore.
-
-    local embeddings_provider = next(conf.embeddings_provider)
-    local embeddings_provider_conf = conf.embeddings_provider[embeddings_provider]
-
-    local embeddings_driver = lru_embeddings_drivers[embeddings_provider]
-    if not embeddings_driver then
-        embeddings_driver = require("apisix.plugins.ai-rag.embeddings." .. embeddings_provider)
-        lru_embeddings_drivers[embeddings_provider] = embeddings_driver
-    end
-
-    local vector_search_provider = next(conf.vector_search_provider)
-    local vector_search_provider_conf = conf.vector_search_provider[vector_search_provider]
-    local vector_search_driver = lru_vector_search_drivers[vector_search_provider]
-    if not vector_search_driver then
-        vector_search_driver = require("apisix.plugins.ai-rag.vector-search." ..
-                                            vector_search_provider)
-        lru_vector_search_drivers[vector_search_provider] = vector_search_driver
     end
 
     -- 1. Extract Input
@@ -156,64 +177,71 @@ function _M.access(conf, ctx)
         return
     end
 
-    -- 2. Get Embeddings
-    local embeddings, status, err = embeddings_driver.get_embeddings(embeddings_provider_conf,
-                                                        input_text)
+    -- 2. Load Drivers
+    local embeddings_provider_name = next(conf.embeddings_provider)
+    local embeddings_conf = conf.embeddings_provider[embeddings_provider_name]
+    local embeddings_driver, err = load_driver("embeddings", embeddings_provider_name,
+                                                lru_embeddings_drivers)
+    if not embeddings_driver then
+        core.log.error("failed to load embeddings driver: ", err)
+        return HTTP_INTERNAL_SERVER_ERROR, "failed to load embeddings driver"
+    end
+
+    local vector_search_provider_name = next(conf.vector_search_provider)
+    local vector_search_conf = conf.vector_search_provider[vector_search_provider_name]
+    local vector_search_driver, err = load_driver("vector-search", vector_search_provider_name,
+                                                    lru_vector_search_drivers)
+    if not vector_search_driver then
+        core.log.error("failed to load vector search driver: ", err)
+        return HTTP_INTERNAL_SERVER_ERROR, "failed to load vector search driver"
+    end
+
+    -- 3. Get Embeddings
+    local embeddings, status, err = embeddings_driver.get_embeddings(embeddings_conf, input_text)
     if not embeddings then
         core.log.error("could not get embeddings: ", err)
         return status, err
     end
 
-    -- 3. Vector Search
+    -- 4. Vector Search
     local search_body = {
         embeddings = embeddings,
-        k = rag_conf.k -- Pass k from config
+        k = rag_conf.k
     }
-    -- fields is now in vector_search_provider_conf
 
-    local docs, status, err = vector_search_driver.search(vector_search_provider_conf,
-                                                        search_body)
+    local docs, status, err = vector_search_driver.search(vector_search_conf, search_body)
     if not docs then
         core.log.error("could not get vector_search result: ", err)
         return status, err
     end
 
-    -- 4. Rerank
+    -- 5. Rerank
     if conf.rerank_provider then
-        local rerank_provider = next(conf.rerank_provider)
-        local rerank_provider_conf = conf.rerank_provider[rerank_provider]
-        local rerank_driver = lru_rerank_drivers[rerank_provider]
+        local rerank_provider_name = next(conf.rerank_provider)
+        local rerank_conf = conf.rerank_provider[rerank_provider_name]
+        local rerank_driver, err = load_driver("rerank", rerank_provider_name, lru_rerank_drivers)
+
         if not rerank_driver then
-            rerank_driver = require("apisix.plugins.ai-rag.rerank." .. rerank_provider)
-            lru_rerank_drivers[rerank_provider] = rerank_driver
+            core.log.error("failed to load rerank driver: ", err)
+            -- If rerank fails to load, should we fail or proceed with original docs?
+            -- Assuming fail for safety, or we could log error and skip rerank.
+            -- Let's return error to be explicit.
+            return HTTP_INTERNAL_SERVER_ERROR, "failed to load rerank driver"
         end
-        docs = rerank_driver.rerank(rerank_provider_conf, docs, input_text)
 
-    end
-
-    -- 5. Inject Context
-    if not body_tab.messages then
-        body_tab.messages = {}
-    end
-
-    -- Format docs
-    local context_str = ""
-    for i, doc in ipairs(docs) do
-        local content = doc.content or core.json.encode(doc)
-        context_str = context_str .. content .. "\n\n"
-    end
-
-    if context_str ~= "" then
-        local augment = {
-            role = "user",
-            content = "Context:\n" .. context_str
-        }
-        if #body_tab.messages > 0 then
-            core.table.insert(body_tab.messages, #body_tab.messages, augment)
+        local reranked_docs, err = rerank_driver.rerank(rerank_conf, docs, input_text)
+        if reranked_docs then
+            docs = reranked_docs
         else
-            core.table.insert_tail(body_tab.messages, augment)
+             core.log.error("rerank failed: ", err)
+             -- If rerank execution fails, we might want to fallback to original docs
+             -- or return error. Let's return error for now as configured rerank failed.
+             return HTTP_INTERNAL_SERVER_ERROR, "rerank failed"
         end
     end
+
+    -- 6. Inject Context
+    inject_context_into_messages(body_tab.messages, docs)
 
     local req_body_json, err = core.json.encode(body_tab)
     if not req_body_json then
