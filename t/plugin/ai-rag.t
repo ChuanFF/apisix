@@ -362,7 +362,7 @@ could not get vector_search result
                                     "endpoint": "http://127.0.0.1:3623/indexes/rag-apisix/docs/search",
                                     "api_key": "correct-key",
                                     "fields": "text_vector",
-                                    "k": 10
+                                    "k": 2
                                 }
                             }
                         }
@@ -395,9 +395,8 @@ POST /echo
         }
     ]
 }
---- response_body eval
-qr/Apache APISIX is a dynamic/
-
+--- response_body
+{"messages":[{"role":"user","content":"Context:\nApache APISIX is a dynamic, real-time, high-performance API Gateway.\n\nIt provides rich traffic management features like load balancing, dynamic upstream, canary release, circuit breaking, authentication, observability, and more."},{"role":"user","content":"What is Apache APISIX?"}]}
 === TEST 9: Happy Path (With Rerank)
 --- config
     location /t {
@@ -463,5 +462,5 @@ POST /echo
         }
     ]
 }
---- response_body eval
-qr/Apache APISIX is a dynamic/
+--- response_body
+{"messages":[{"role":"user","content":"Context:\nApache APISIX is a dynamic, real-time, high-performance API Gateway."},{"role":"user","content":"What is Apache APISIX?"}]}
