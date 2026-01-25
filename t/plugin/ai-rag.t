@@ -90,22 +90,41 @@ add_block_preprocessor(sub {
                          return
                     end
 
-                    ngx.status = 200
-                    ngx.say([[
+                    -- Simulate Search: Return k docs
+                    local all_docs = {
                         {
-                            "value": [
-                                {
-                                    "chunk": "Apache APISIX is a dynamic, real-time, high-performance API Gateway."
-                                },
-                                {
-                                    "chunk": "It provides rich traffic management features like load balancing, dynamic upstream, canary release, circuit breaking, authentication, observability, and more."
-                                },
-                                {
-                                    "chunk": "Apache Tomcat is an open source implementation of the Jakarta Servlet, Jakarta Server Pages, Jakarta Expression Language, Jakarta WebSocket, Jakarta Annotations and Jakarta Authentication specifications."
-                                }
-                            ]
+                            chunk = "Apache APISIX is a dynamic, real-time, high-performance API Gateway."
+                        },
+                        {
+                            chunk = "It provides rich traffic management features like load balancing, dynamic upstream, canary release, circuit breaking, authentication, observability, and more."
+                        },
+                        {
+                            chunk = "Apache Tomcat is an open source implementation of the Jakarta Servlet, Jakarta Server Pages, Jakarta Expression Language, Jakarta WebSocket, Jakarta Annotations and Jakarta Authentication specifications."
                         }
-                    ]])
+                    }
+
+                    local docs = all_docs
+                    -- The request body structure is:
+                    -- {
+                    --     "vectorQueries": [
+                    --         {
+                    --             "k": 10,
+                    --             ...
+                    --         }
+                    --     ]
+                    -- }
+                    if data.vectorQueries and data.vectorQueries[1] and data.vectorQueries[1].k then
+                        local k = tonumber(data.vectorQueries[1].k)
+                        if k and k > 0 and k < #all_docs then
+                            docs = {}
+                            for i = 1, k do
+                                table.insert(docs, all_docs[i])
+                            end
+                        end
+                    end
+
+                    ngx.status = 200
+                    ngx.say(json.encode({ value = docs }))
                 }
             }
 
@@ -396,7 +415,7 @@ POST /echo
     ]
 }
 --- response_body
-{"messages":[{"role":"user","content":"Context:\nApache APISIX is a dynamic, real-time, high-performance API Gateway.\n\nIt provides rich traffic management features like load balancing, dynamic upstream, canary release, circuit breaking, authentication, observability, and more."},{"role":"user","content":"What is Apache APISIX?"}]}
+{"messages":[{"role":"user","content":"Context:\n{\"chunk\":\"Apache APISIX is a dynamic, real-time, high-performance API Gateway.\"}\n\n{\"chunk\":\"It provides rich traffic management features like load balancing, dynamic upstream, canary release, circuit breaking, authentication, observability, and more.\"}"},{"role":"user","content":"What is Apache APISIX?"}]}
 === TEST 9: Happy Path (With Rerank)
 --- config
     location /t {
