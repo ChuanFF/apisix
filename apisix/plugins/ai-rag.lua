@@ -256,6 +256,7 @@ function _M.access(conf, ctx)
         end
     end
 
+    core.log.debug("Number of documents retrieved: ",#docs)
     -- 6. Inject Context
     inject_context_into_messages(body_tab.messages, docs)
 

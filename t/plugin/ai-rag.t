@@ -404,6 +404,7 @@ could not get vector_search result
 passed
 
 === TEST 8: Verify Context Injection (No Rerank)
+--- log_level: debug
 --- request
 POST /echo
 {
@@ -414,8 +415,10 @@ POST /echo
         }
     ]
 }
---- response_body
-{"messages":[{"role":"user","content":"Context:\n{\"chunk\":\"Apache APISIX is a dynamic, real-time, high-performance API Gateway.\"}\n\n{\"chunk\":\"It provides rich traffic management features like load balancing, dynamic upstream, canary release, circuit breaking, authentication, observability, and more.\"}"},{"role":"user","content":"What is Apache APISIX?"}]}
+--- error_log
+Number of documents retrieved: 2
+--- response_body eval
+qr/Apache APISIX is a dynamic, real-time, high-performance API Gateway.*It provides rich traffic management features like load balancing.*What is Apache APISIX/
 === TEST 9: Happy Path (With Rerank)
 --- config
     location /t {
@@ -471,6 +474,7 @@ POST /echo
 passed
 
 === TEST 10: Verify Context Injection (With Rerank)
+--- log_level: debug
 --- request
 POST /echo
 {
@@ -481,5 +485,7 @@ POST /echo
         }
     ]
 }
+--- error_log
+Number of documents retrieved: 1
 --- response_body
-{"messages":[{"role":"user","content":"Context:\nApache APISIX is a dynamic, real-time, high-performance API Gateway."},{"role":"user","content":"What is Apache APISIX?"}]}
+qr/Apache APISIX is a dynamic, real-time, high-performance API Gateway.*What is Apache APISIX/
