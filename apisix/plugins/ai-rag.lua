@@ -76,9 +76,9 @@ local schema = {
                     type = "string",
                     enum = { input_strategy.last, input_strategy.all},
                     default = input_strategy.last,
-                    description = "Strategy for extracting input text from messages.
-                            'last' uses the last user message,
-                            'all' concatenates all user messages."
+                    description = "Strategy for extracting input text from messages."
+                            .. "'last' uses the last user message"
+                            .. "'all' concatenates all user messages."
                 }
             },
             default = {},
