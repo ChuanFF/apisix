@@ -43,30 +43,48 @@ local schema = {
     properties = {
         embeddings_provider = {
             type = "object",
-            properties = {
-                openai = openai_base_embeddings_schema,
-                azure = openai_base_embeddings_schema
+            oneOf = {
+                {
+                    properties = {
+                        openai = openai_base_embeddings_schema
+                    },
+                    required = { "openai" },
+                    additionalProperties = false
+                },
+                {
+                    properties = {
+                        azure = openai_base_embeddings_schema
+                    },
+                    required = { "azure" },
+                    additionalProperties = false
+                }
             },
-            maxProperties = 1,
-            minProperties = 1,
             description = "Configuration for the embeddings provider."
         },
         vector_search_provider = {
             type = "object",
-            properties = {
-                ["azure-ai-search"] = azure_ai_search_schema
+            oneOf = {
+                {
+                    properties = {
+                        ["azure-ai-search"] = azure_ai_search_schema
+                    },
+                    required = { "azure-ai-search" },
+                    additionalProperties = false
+                }
             },
-            maxProperties = 1,
-            minProperties = 1,
             description = "Configuration for the vector search provider."
         },
         rerank_provider = {
             type = "object",
-            properties = {
-                cohere = cohere_rerank_schema
+            oneOf = {
+                {
+                    properties = {
+                        cohere = cohere_rerank_schema
+                    },
+                    required = { "cohere" },
+                    additionalProperties = false
+                }
             },
-            minProperties = 1,
-            maxProperties = 1,
             description = "Configuration for the rerank provider."
         },
         rag_config = {
