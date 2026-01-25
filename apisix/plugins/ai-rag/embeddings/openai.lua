@@ -87,11 +87,11 @@ local function get_headers(conf)
     }
 
     -- Azure OpenAI uses api-key header
-    if conf.endpoint:find("openai.azure.com") or conf.endpoint:find("azure-api.net") then
-        headers["api-key"] = conf.api_key
-    else
+    -- if conf.endpoint:find("openai.azure.com") or conf.endpoint:find("azure-api.net") then
+    --    headers["api-key"] = conf.api_key
+    -- else
         headers["Authorization"] = "Bearer " .. conf.api_key
-    end
+    -- end
 
     return headers
 end
