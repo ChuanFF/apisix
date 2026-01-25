@@ -288,7 +288,8 @@ could not get embeddings
                                 "azure_ai_search": {
                                     "endpoint": "http://127.0.0.1:3623/indexes/rag-apisix/docs/search",
                                     "api_key": "wrong-key",
-                                    "fields": "text_vector"
+                                    "fields": "text_vector",
+                                    "k": 10
                                 }
                             }
                         }

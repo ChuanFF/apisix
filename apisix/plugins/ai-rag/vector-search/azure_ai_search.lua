@@ -43,9 +43,12 @@ _M.schema = {
             description = "Whether to perform an exhaustive search."
         },
         select = {
-            type = "string",
-            default = "chunk",
-            description = "Comma-separated list of fields to select in the response"
+            type = "array",
+            items = {
+                type = "string"
+            },
+            default = {"chunk"},
+            description = "List of fields to select in the response"
         },
         k = {
             type = "integer",
@@ -59,8 +62,9 @@ _M.schema = {
 
 
 function _M.search(conf, embeddings)
+    local select_str = core.table.concat(conf.select, ",")
     local body = {
-        select = conf.select,
+        select = select_str,
         vectorQueries = {
             {
                 kind = "vector",
@@ -98,8 +102,20 @@ function _M.search(conf, embeddings)
     if not res_tab then
         return nil, HTTP_INTERNAL_SERVER_ERROR, err
     end
+    if not res_tab.value or #res_tab.value == 0 then
+        return {}
+    end
+    local docs = {}
+    for i=1, #res_tab.value do
+        local item = res_tab.value[i]
+        local doc = {}
+        for _, field in ipairs(conf.select) do
+            doc[field] = item[field]
+        end
+        docs[i] = doc
+    end
 
-    return res_tab.value
+    return docs
 end
 
 return _M

@@ -35,7 +35,7 @@ _M.schema = {
         },
         model = {
             type = "string",
-            default = "rerank-english-v2.0",
+            default = "Cohere-rerank-v4.0-fast",
             description = "The model to use for reranking."
         },
         top_n = {
