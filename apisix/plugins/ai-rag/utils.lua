@@ -53,6 +53,7 @@ function _M.get_openai_embedding(endpoint, headers, body_tab)
         return nil, HTTP_INTERNAL_SERVER_ERROR, "invalid response format"
     end
 
+    -- Return the first embedding as current logic only handles one input for search
     return res_tab.data[1].embedding
 end
 

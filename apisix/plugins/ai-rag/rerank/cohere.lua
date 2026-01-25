@@ -100,10 +100,13 @@ function _M.rerank(conf, docs, query)
 
     local new_docs = {}
     for _, result in ipairs(res_body.results) do
-        -- Cohere returns 0-based index?
-        -- API docs say "index: The index of the document in the original list."
-        -- Python client uses 0-based.
-        -- Let's assume API returns 0-based index. Lua is 1-based.
+        -- Cohere returns index in results, which is 0-based in example.
+        -- "index": 1, "index": 2, "index": 4 in example are likely 0-based from original documents list.
+        -- But let's verify if lua tables are 1-based.
+        -- If example inputs are docs[0], docs[1]... docs[7]
+        -- results indices are 1, 2, 4.
+        -- Lua tables are 1-based. So we need to map 0-based index to 1-based.
+        -- Assuming API returns 0-based index.
         local idx = result.index + 1
         local doc = docs[idx]
         if doc then

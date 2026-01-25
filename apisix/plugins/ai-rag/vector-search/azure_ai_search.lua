@@ -33,6 +33,15 @@ _M.schema = {
         fields = {
             type = "string",
             description = "Comma-separated list of fields to retrieve"
+        },
+        exhaustive = {
+            type = "boolean",
+            default = true
+        },
+        select = {
+            type = "string",
+            default = "chunk",
+            description = "Comma-separated list of fields to select in the response"
         }
     },
     required = {"endpoint", "api_key", "fields"}
@@ -41,12 +50,14 @@ _M.schema = {
 
 function _M.search(conf, search_body)
     local body = {
+        select = conf.select,
         vectorQueries = {
             {
                 kind = "vector",
                 vector = search_body.embeddings,
                 fields = conf.fields,
-                k = search_body.k
+                k = search_body.k,
+                exhaustive = conf.exhaustive
             }
         }
     }

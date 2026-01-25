@@ -51,8 +51,7 @@ function _M.get_embeddings(conf, input)
     local body = {
         input = input,
         model = conf.model,
-        dimensions = conf.dimensions,
-        user = conf.user,
+        dimensions = conf.dimensions
     }
     return utils.get_openai_embedding(conf.endpoint, headers, body)
 end
