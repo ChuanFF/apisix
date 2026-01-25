@@ -22,8 +22,8 @@ local ipairs  = ipairs
 
 local core     = require("apisix.core")
 
-local openai_embeddings_schema = require("apisix.plugins.ai-rag.embeddings.openai").schema
-local azure_ai_search_schema = require("apisix.plugins.ai-rag.vector-search.azure_ai_search").schema
+local openai_base_embeddings_schema = require("apisix.plugins.ai-rag.embeddings.openai-base").schema
+local azure_ai_search_schema = require("apisix.plugins.ai-rag.vector-search.azure-ai-search").schema
 local cohere_rerank_schema = require("apisix.plugins.ai-rag.rerank.cohere").schema
 
 local HTTP_INTERNAL_SERVER_ERROR = ngx.HTTP_INTERNAL_SERVER_ERROR
@@ -44,11 +44,12 @@ local schema = {
         embeddings_provider = {
             type = "object",
             properties = {
-                openai = openai_embeddings_schema
+                openai = openai_base_embeddings_schema,
+                azure = openai_base_embeddings_schema
             },
             maxProperties = 1,
             minProperties = 1,
-            description = "Configuration for the embeddings provider, such as OpenAI."
+            description = "Configuration for the embeddings provider."
         },
         vector_search_provider = {
             type = "object",
@@ -57,7 +58,7 @@ local schema = {
             },
             maxProperties = 1,
             minProperties = 1,
-            description = "Configuration for the vector search provider, such as Azure AI Search."
+            description = "Configuration for the vector search provider."
         },
         rerank_provider = {
             type = "object",
@@ -66,7 +67,7 @@ local schema = {
             },
             minProperties = 1,
             maxProperties = 1,
-            description = "Configuration for the rerank provider, such as Cohere."
+            description = "Configuration for the rerank provider."
         },
         rag_config = {
             type = "object",
