@@ -43,12 +43,9 @@ _M.schema = {
             description = "Whether to perform an exhaustive search."
         },
         select = {
-            type = "array",
-            items = {
-                type = "string"
-            },
-            default = {"chunk"},
-            description = "List of fields to select in the response"
+            type = "string",
+            default = "chunk",
+            description = "field to select in the response"
         },
         k = {
             type = "integer",
@@ -62,9 +59,8 @@ _M.schema = {
 
 
 function _M.search(conf, embeddings)
-    local select_str = core.table.concat(conf.select, ",")
     local body = {
-        select = select_str,
+        select = conf.select,
         vectorQueries = {
             {
                 kind = "vector",
@@ -108,11 +104,7 @@ function _M.search(conf, embeddings)
     local docs = {}
     for i=1, #res_tab.value do
         local item = res_tab.value[i]
-        local doc = {}
-        for _, field in ipairs(conf.select) do
-            doc[field] = item[field]
-        end
-        docs[i] = doc
+        docs[i] = item[conf.select]
     end
 
     return docs
