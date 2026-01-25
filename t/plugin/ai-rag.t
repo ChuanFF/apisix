@@ -125,29 +125,41 @@ add_block_preprocessor(sub {
                     local body = ngx.req.get_body_data()
                     local data = json.decode(body)
 
-                    if not data.documents or not data.query then
+                    if not data.query then
                          ngx.status = 400
                          ngx.say([[{"error": "Bad Request"}]])
                          return
                     end
 
                     -- Simulate Rerank: Prefer APISIX related docs (Index 0 and 1)
-                    -- Let's say we return them in a specific order with scores
-                    ngx.status = 200
-                    ngx.say([[
+                    local all_results = {
                         {
-                            "results": [
-                                {
-                                    "index": 0,
-                                    "relevance_score": 0.99
-                                },
-                                {
-                                    "index": 1,
-                                    "relevance_score": 0.95
-                                }
-                            ]
+                            index = 0,
+                            relevance_score = 0.99
+                        },
+                        {
+                            index = 1,
+                            relevance_score = 0.95
+                        },
+                        {
+                            index = 2,
+                            relevance_score = 0.95
                         }
-                    ]])
+                    }
+
+                    local results = all_results
+                    if data.top_n then
+                        local n = tonumber(data.top_n)
+                        if n and n > 0 and n < #all_results then
+                            results = {}
+                            for i = 1, n do
+                                table.insert(results, all_results[i])
+                            end
+                        end
+                    end
+
+                    ngx.status = 200
+                    ngx.say(json.encode({ results = results }))
                  }
             }
         }
