@@ -39,9 +39,6 @@ _M.schema = {
         dimensions = {
             type = "integer",
             minimum = 1,
-        },
-        user = {
-            type = "string",
         }
     },
     required = { "api_key" }
@@ -102,8 +99,7 @@ function _M.get_embeddings(conf, input)
     local body = {
         input = input,
         model = conf.model,
-        dimensions = conf.dimensions,
-        user = conf.user,
+        dimensions = conf.dimensions
     }
 
     return request_embedding_vector(conf.endpoint, headers, body)

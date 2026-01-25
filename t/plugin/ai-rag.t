@@ -33,7 +33,7 @@ add_block_preprocessor(sub {
     my ($block) = @_;
 
     if (!defined $block->request) {
-        $block->set_value("request", "POST /t");
+        $block->set_value("request", "GET /t");
     }
 
     my $http_config = $block->http_config // <<_EOC_;
@@ -214,7 +214,7 @@ property "vector_search_provider" is required
             local code, body = t('/apisix/admin/routes/1',
                  ngx.HTTP_PUT,
                  [[{
-                    "uri": "/chat",
+                    "uri": "/echo",
                     "plugins": {
                         "ai-rag": {
                             "embeddings_provider": {
@@ -227,7 +227,8 @@ property "vector_search_provider" is required
                                 "azure_ai_search": {
                                     "endpoint": "http://127.0.0.1:3623/indexes/rag-apisix/docs/search",
                                     "api_key": "correct-key",
-                                    "fields": "text_vector"
+                                    "fields": "text_vector",
+                                    "k": 10
                                 }
                             }
                         }
@@ -251,7 +252,7 @@ passed
 
 === TEST 4: Send request with wrong embeddings key
 --- request
-POST /chat
+POST /echo
 {
     "messages": [
         {
@@ -274,7 +275,7 @@ could not get embeddings
             local code, body = t('/apisix/admin/routes/1',
                  ngx.HTTP_PUT,
                  [[{
-                    "uri": "/chat",
+                    "uri": "/echo",
                     "plugins": {
                         "ai-rag": {
                             "embeddings_provider": {
@@ -311,7 +312,7 @@ passed
 
 === TEST 6: Send request with wrong search key
 --- request
-POST /chat
+POST /echo
 {
     "messages": [
         {
@@ -334,7 +335,7 @@ could not get vector_search result
             local code, body = t('/apisix/admin/routes/1',
                  ngx.HTTP_PUT,
                  [[{
-                    "uri": "/chat",
+                    "uri": "/echo",
                     "plugins": {
                         "ai-rag": {
                             "embeddings_provider": {
@@ -347,7 +348,8 @@ could not get vector_search result
                                 "azure_ai_search": {
                                     "endpoint": "http://127.0.0.1:3623/indexes/rag-apisix/docs/search",
                                     "api_key": "correct-key",
-                                    "fields": "text_vector"
+                                    "fields": "text_vector",
+                                    "k": 10
                                 }
                             }
                         }
@@ -371,7 +373,7 @@ passed
 
 === TEST 8: Verify Context Injection (No Rerank)
 --- request
-POST /chat
+POST /echo
 {
     "messages": [
         {
@@ -391,7 +393,7 @@ qr/Apache APISIX is a dynamic/
             local code, body = t('/apisix/admin/routes/1',
                  ngx.HTTP_PUT,
                  [[{
-                    "uri": "/chat",
+                    "uri": "/echo",
                     "plugins": {
                         "ai-rag": {
                             "embeddings_provider": {
@@ -404,7 +406,8 @@ qr/Apache APISIX is a dynamic/
                                 "azure_ai_search": {
                                     "endpoint": "http://127.0.0.1:3623/indexes/rag-apisix/docs/search",
                                     "api_key": "correct-key",
-                                    "fields": "text_vector"
+                                    "fields": "text_vector",
+                                    "k": 10
                                 }
                             },
                             "rerank_provider": {
@@ -437,7 +440,7 @@ passed
 
 === TEST 10: Verify Context Injection (With Rerank)
 --- request
-POST /chat
+POST /echo
 {
     "messages": [
         {

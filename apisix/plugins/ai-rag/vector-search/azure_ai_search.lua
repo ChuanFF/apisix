@@ -42,21 +42,27 @@ _M.schema = {
             type = "string",
             default = "chunk",
             description = "Comma-separated list of fields to select in the response"
+        },
+        k = {
+            type = "integer",
+            minimum = 1,
+            default = 5,
+            description = "Number of nearest neighbors to return as top hits."
         }
     },
     required = {"endpoint", "api_key", "fields"}
 }
 
 
-function _M.search(conf, search_body)
+function _M.search(conf, embeddings)
     local body = {
         select = conf.select,
         vectorQueries = {
             {
                 kind = "vector",
-                vector = search_body.embeddings,
+                vector = embeddings,
                 fields = conf.fields,
-                k = search_body.k,
+                k = conf.k,
                 exhaustive = conf.exhaustive
             }
         }

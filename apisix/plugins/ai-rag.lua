@@ -71,14 +71,9 @@ local schema = {
             properties = {
                 input_strategy = {
                     type = "string",
-                    enum = { input_strategy.last, input_strategy.all },
+                    enum = { input_strategy.last, input_strategy.all},
                     default = input_strategy.last
-                },
-                k = {
-                    type = "integer",
-                    minimum = 1,
-                    default = 5
-                },
+                }
             },
             default = {}
         }
@@ -213,12 +208,7 @@ function _M.access(conf, ctx)
     end
 
     -- 4. Vector Search
-    local search_body = {
-        embeddings = embeddings,
-        k = rag_conf.k
-    }
-
-    local docs, status, err = vector_search_driver.search(vector_search_conf, search_body)
+    local docs, status, err = vector_search_driver.search(vector_search_conf, embeddings)
     if not docs then
         core.log.error("could not get vector_search result: ", err)
         return status, err
