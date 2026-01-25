@@ -144,7 +144,7 @@ add_block_preprocessor(sub {
                     local body = ngx.req.get_body_data()
                     local data = json.decode(body)
 
-                    if not data.query then
+                    if not data.query or not data.documents then
                          ngx.status = 400
                          ngx.say([[{"error": "Bad Request"}]])
                          return
@@ -200,7 +200,9 @@ __DATA__
                 vector_search_provider = {
                     ["azure-ai-search"] = {
                         endpoint = "http://127.0.0.1:3623/search",
-                        api_key = "key"
+                        api_key = "key",
+                        fields = "text_vector",
+                        select = "chunk"
                     }
                 }
             })
@@ -259,6 +261,7 @@ property "vector_search_provider" is required
                                     "endpoint": "http://127.0.0.1:3623/indexes/rag-apisix/docs/search",
                                     "api_key": "correct-key",
                                     "fields": "text_vector",
+                                    "select": "chunk",
                                     "k": 10
                                 }
                             }
@@ -320,6 +323,7 @@ could not get embeddings
                                     "endpoint": "http://127.0.0.1:3623/indexes/rag-apisix/docs/search",
                                     "api_key": "wrong-key",
                                     "fields": "text_vector",
+                                    "select": "chunk",
                                     "k": 10
                                 }
                             }
@@ -381,6 +385,7 @@ could not get vector_search result
                                     "endpoint": "http://127.0.0.1:3623/indexes/rag-apisix/docs/search",
                                     "api_key": "correct-key",
                                     "fields": "text_vector",
+                                    "select": "chunk",
                                     "k": 2
                                 }
                             }
@@ -441,6 +446,7 @@ qr/Apache APISIX is a dynamic, real-time, high-performance API Gateway.*It provi
                                     "endpoint": "http://127.0.0.1:3623/indexes/rag-apisix/docs/search",
                                     "api_key": "correct-key",
                                     "fields": "text_vector",
+                                    "select": "chunk",
                                     "k": 10
                                 }
                             },
@@ -448,6 +454,7 @@ qr/Apache APISIX is a dynamic, real-time, high-performance API Gateway.*It provi
                                 "cohere": {
                                     "endpoint": "http://127.0.0.1:3623/rerank",
                                     "api_key": "correct-key",
+                                    "model": "Cohere-rerank-v4.0-fast",
                                     "top_n": 1
                                 }
                             }

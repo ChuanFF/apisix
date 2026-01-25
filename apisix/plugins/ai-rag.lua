@@ -14,11 +14,13 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 --
-local next    = next
-local require = require
-local ngx_req = ngx.req
-local table   = table
-local ipairs  = ipairs
+local next     = next
+local require  = require
+local ngx_req  = ngx.req
+local table    = table
+local ipairs   = ipairs
+local pcall    = pcall
+local tostring = tostring
 
 local core     = require("apisix.core")
 

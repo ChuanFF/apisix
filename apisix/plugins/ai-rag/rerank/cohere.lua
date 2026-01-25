@@ -26,7 +26,7 @@ _M.schema = {
     properties = {
         endpoint = {
             type = "string",
-            default = "https://api.cohere.ai/v1/rerank",
+            default = "https://api.cohere.ai/v2/rerank",
             description = "The endpoint for the Cohere Rerank API."
         },
         api_key = {
@@ -35,7 +35,6 @@ _M.schema = {
         },
         model = {
             type = "string",
-            default = "Cohere-rerank-v4.0-fast",
             description = "The model to use for reranking."
         },
         top_n = {
@@ -45,7 +44,7 @@ _M.schema = {
             description = "The number of top results to return."
         }
     },
-    required = { "api_key" }
+    required = { "api_key", "model" }
 }
 
 function _M.rerank(conf, docs, query)

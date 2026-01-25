@@ -34,8 +34,7 @@ _M.schema = {
         },
         fields = {
             type = "string",
-            description = "Comma-separated list of fields to retrieve",
-            default = "chunk"
+            description = "Comma-separated list of fields to retrieve"
         },
         exhaustive = {
             type = "boolean",
@@ -44,7 +43,6 @@ _M.schema = {
         },
         select = {
             type = "string",
-            default = "chunk",
             description = "field to select in the response"
         },
         k = {
@@ -54,7 +52,7 @@ _M.schema = {
             description = "Number of nearest neighbors to return as top hits."
         }
     },
-    required = {"endpoint", "api_key"}
+    required = {"endpoint", "api_key","fields","select"}
 }
 
 
