@@ -23,16 +23,21 @@ local ipairs  = ipairs
 
 local core     = require("apisix.core")
 
-local openai_embeddings = require("apisix.plugins.ai-rag.embeddings.openai").schema
+local openai_embeddings_schema = require("apisix.plugins.ai-rag.embeddings.openai").schema
 local azure_ai_search_schema = require("apisix.plugins.ai-rag.vector-search.azure_ai_search").schema
 local cohere_rerank_schema = require("apisix.plugins.ai-rag.rerank.cohere").schema
 
 local HTTP_INTERNAL_SERVER_ERROR = ngx.HTTP_INTERNAL_SERVER_ERROR
 local HTTP_BAD_REQUEST = ngx.HTTP_BAD_REQUEST
 
-local lru_embeddings_drivers = {}
-local lru_vector_search_drivers = {}
-local lru_rerank_drivers = {}
+local embeddings_drivers = {}
+local vector_search_drivers = {}
+local rerank_drivers = {}
+
+local input_strategy = {
+    last = "last",
+    all = "all"
+}
 
 local schema = {
     type = "object",
@@ -40,7 +45,7 @@ local schema = {
         embeddings_provider = {
             type = "object",
             properties = {
-                openai = openai_embeddings
+                openai = openai_embeddings_schema
             },
             maxProperties = 1,
             minProperties = 1,
@@ -66,8 +71,8 @@ local schema = {
             properties = {
                 input_strategy = {
                     type = "string",
-                    enum = { "last", "all" },
-                    default = "last"
+                    enum = { input_strategy.last, input_strategy.all },
+                    default = input_strategy.last
                 },
                 k = {
                     type = "integer",
@@ -99,13 +104,13 @@ local function get_input_text(messages, strategy)
         return nil
     end
 
-    if strategy == "last" then
+    if strategy == input_strategy.last then
         for i = #messages, 1, -1 do
             if messages[i].role == "user" then
                 return messages[i].content
             end
         end
-    elseif strategy == "all" then
+    elseif strategy == input_strategy.all then
         local contents = {}
         for _, msg in ipairs(messages) do
             if msg.role == "user" then
@@ -183,7 +188,7 @@ function _M.access(conf, ctx)
     local embeddings_provider_name = next(conf.embeddings_provider)
     local embeddings_conf = conf.embeddings_provider[embeddings_provider_name]
     local embeddings_driver, err = load_driver("embeddings", embeddings_provider_name,
-                                                lru_embeddings_drivers)
+            embeddings_drivers)
     if not embeddings_driver then
         core.log.error("failed to load embeddings driver: ", err)
         return HTTP_INTERNAL_SERVER_ERROR, "failed to load embeddings driver"
@@ -192,7 +197,7 @@ function _M.access(conf, ctx)
     local vector_search_provider_name = next(conf.vector_search_provider)
     local vector_search_conf = conf.vector_search_provider[vector_search_provider_name]
     local vector_search_driver, err = load_driver("vector-search", vector_search_provider_name,
-                                                    lru_vector_search_drivers)
+            vector_search_drivers)
     if not vector_search_driver then
         core.log.error("failed to load vector search driver: ", err)
         return HTTP_INTERNAL_SERVER_ERROR, "failed to load vector search driver"
@@ -221,7 +226,7 @@ function _M.access(conf, ctx)
     if conf.rerank_provider then
         local rerank_provider_name = next(conf.rerank_provider)
         local rerank_conf = conf.rerank_provider[rerank_provider_name]
-        local rerank_driver, err = load_driver("rerank", rerank_provider_name, lru_rerank_drivers)
+        local rerank_driver, err = load_driver("rerank", rerank_provider_name, rerank_drivers)
 
         if not rerank_driver then
             core.log.error("failed to load rerank driver: ", err)
