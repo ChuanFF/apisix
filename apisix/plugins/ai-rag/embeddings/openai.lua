@@ -14,7 +14,11 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 --
-local utils = require("apisix.plugins.ai-rag.utils")
+local core = require("apisix.core")
+local http = require("resty.http")
+
+local HTTP_INTERNAL_SERVER_ERROR = ngx.HTTP_INTERNAL_SERVER_ERROR
+local HTTP_OK = ngx.HTTP_OK
 
 local _M = {}
 
@@ -30,7 +34,7 @@ _M.schema = {
         },
         model = {
             type = "string",
-            default = "text-embedding-ada-002",
+            default = "text-embedding-3-large",
         },
         dimensions = {
             type = "integer",
@@ -43,17 +47,66 @@ _M.schema = {
     required = { "api_key" }
 }
 
-function _M.get_embeddings(conf, input)
+local function request_embedding_vector(endpoint, headers, body_tab)
+    local body_str, err = core.json.encode(body_tab)
+    if not body_str then
+        return nil, HTTP_INTERNAL_SERVER_ERROR, err
+    end
+
+    local httpc = http.new()
+    local res, err = httpc:request_uri(endpoint, {
+        method = "POST",
+        headers = headers,
+        body = body_str
+    })
+
+    if not res then
+        return nil, HTTP_INTERNAL_SERVER_ERROR, err
+    end
+
+    if res.status ~= HTTP_OK then
+        return nil, res.status, res.body
+    end
+
+    local res_tab, err = core.json.decode(res.body)
+    if not res_tab then
+        return nil, HTTP_INTERNAL_SERVER_ERROR, err
+    end
+
+    if not res_tab.data or not res_tab.data[1] or not res_tab.data[1].embedding then
+        return nil, HTTP_INTERNAL_SERVER_ERROR, "invalid response format"
+    end
+
+    -- Return the first embedding as current logic only handles one input for search
+    return res_tab.data[1].embedding
+end
+
+local function get_headers(conf)
     local headers = {
         ["Content-Type"] = "application/json",
-        ["Authorization"] = "Bearer " .. conf.api_key,
     }
+
+    -- Azure OpenAI uses api-key header
+    if conf.endpoint:find("openai.azure.com") or conf.endpoint:find("azure-api.net") then
+        headers["api-key"] = conf.api_key
+    else
+        headers["Authorization"] = "Bearer " .. conf.api_key
+    end
+
+    return headers
+end
+
+function _M.get_embeddings(conf, input)
+    local headers = get_headers(conf)
+
     local body = {
         input = input,
         model = conf.model,
-        dimensions = conf.dimensions
+        dimensions = conf.dimensions,
+        user = conf.user,
     }
-    return utils.get_openai_embedding(conf.endpoint, headers, body)
+
+    return request_embedding_vector(conf.endpoint, headers, body)
 end
 
 return _M

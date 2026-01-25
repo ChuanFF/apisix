@@ -22,7 +22,6 @@ local string  = string
 
 local core     = require("apisix.core")
 
-local azure_openai_embeddings = require("apisix.plugins.ai-rag.embeddings.azure_openai").schema
 local openai_embeddings = require("apisix.plugins.ai-rag.embeddings.openai").schema
 local azure_ai_search_schema = require("apisix.plugins.ai-rag.vector-search.azure_ai_search").schema
 local cohere_rerank_schema = require("apisix.plugins.ai-rag.rerank.cohere").schema
@@ -40,7 +39,6 @@ local schema = {
         embeddings_provider = {
             type = "object",
             properties = {
-                azure_openai = azure_openai_embeddings,
                 openai = openai_embeddings
             },
             maxProperties = 1,
@@ -59,6 +57,7 @@ local schema = {
             properties = {
                 cohere = cohere_rerank_schema
             },
+            minProperties = 1,
             maxProperties = 1,
         },
         rag_config = {
@@ -131,6 +130,7 @@ function _M.access(conf, ctx)
 
     local embeddings_provider = next(conf.embeddings_provider)
     local embeddings_provider_conf = conf.embeddings_provider[embeddings_provider]
+
     local embeddings_driver = lru_embeddings_drivers[embeddings_provider]
     if not embeddings_driver then
         embeddings_driver = require("apisix.plugins.ai-rag.embeddings." .. embeddings_provider)
