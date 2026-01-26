@@ -438,6 +438,9 @@ POST /echo
 Number of documents retrieved: 2
 --- response_body eval
 qr/Apache APISIX is a dynamic, real-time, high-performance API Gateway.*It provides rich traffic management features like load balancing.*What is Apache APISIX/
+
+
+
 === TEST 9: Happy Path (With Rerank)
 --- config
     location /t {
