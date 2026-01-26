@@ -43,7 +43,7 @@ description: ai-rag 插件通过检索增强生成（RAG）增强 LLM 输出，�
 
 | 名称                                      |   必选项   |   类型   | 有效值 |  描述                                                                                                                             |
 | ----------------------------------------------- | ------------ | -------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| embeddings_provider                             | 是          | object   | openai,azure,openai-compatible | 嵌入模型提供商的配置。必须且只能指定一种，当前支持openai,azure,openai-compatible                                                                                         |
+| embeddings_provider                             | 是          | object   | openai, azure, openai_compatible | 嵌入模型提供商的配置。必须且只能指定一种，当前支持 `openai`, `azure`, `openai-compatible`                                                                                         |
 | vector_search_provider                          | 是          | object   | azure_ai_search | 向量搜索提供商的配置。                                                                                              |
 | vector_search_provider.azure_ai_search          | 是          | object   |  | Azure AI Search 的配置。                                                                                                         |
 | vector_search_provider.azure_ai_search.endpoint | 是          | string   |  | Azure AI Search 端点。                                                                                                                  |
@@ -61,9 +61,8 @@ description: ai-rag 插件通过检索增强生成（RAG）增强 LLM 输出，�
 | rag_config                                      | 否          | object   |  | RAG 流程的通用配置。                                                                                                 |
 | rag_config.input_strategy                       | 否          | string   |  | 提取用户输入文本的策略。可选值：`last`（仅最后一条消息），`all`（所有用户消息拼接）。默认为 `last`。                                     |
 
+### embeddings_provider 属性
 
-
-### embeddings_provider属性（适用于 `openai` 和 `azure`）
 当前支持`openai`,`azure`,`openai-compatible`,所有子字段均位于 `embeddings_provider.<provider>` 对象下（例如 `embeddings_provider.openai.api_key`）。
 
 | 名称        | 必选项 | 类型    | 描述                                                                 |
@@ -72,10 +71,6 @@ description: ai-rag 插件通过检索增强生成（RAG）增强 LLM 输出，�
 | `api_key`   | 是     | string  | 访问凭证（API Key）。                                               |
 | `model`     | 否     | string  | 模型名称，默认为 `text-embedding-3-large`。                         |
 | `dimensions`| 否     | integer | 向量维度（仅 `text-embedding-3-*` 系列支持）。                      |
-
-
-
-
 
 ## 示例
 
@@ -186,6 +181,7 @@ curl "http://127.0.0.1:9080/rag" -X POST \
 ```
 
 插件将会：
+
 1. 提取用户问题 "Which Azure services are good for DevOps?"。
 2. 调用 Azure OpenAI 生成该问题的嵌入向量。
 3. 使用向量在 Azure AI Search 中检索最相关的 10 个文档 (`k=10`)。

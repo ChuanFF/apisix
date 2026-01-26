@@ -216,6 +216,8 @@ __DATA__
 --- response_body
 property "embeddings_provider" is required
 
+
+
 === TEST 2: Schema validation - missing vector_search_provider
 --- config
     location /t {
@@ -238,6 +240,8 @@ property "embeddings_provider" is required
     }
 --- response_body
 property "vector_search_provider" is required
+
+
 
 === TEST 3: Authentication validation - Wrong Embeddings Key
 --- config
@@ -284,6 +288,8 @@ property "vector_search_provider" is required
 --- response_body
 passed
 
+
+
 === TEST 4: Send request with wrong embeddings key
 --- request
 POST /echo
@@ -300,6 +306,8 @@ POST /echo
 {"error": "Unauthorized"}
 --- error_log
 could not get embeddings
+
+
 
 === TEST 5: Authentication validation - Wrong Search Key
 --- config
@@ -346,6 +354,8 @@ could not get embeddings
 --- response_body
 passed
 
+
+
 === TEST 6: Send request with wrong search key
 --- request
 POST /echo
@@ -362,6 +372,8 @@ POST /echo
 {"error": "Unauthorized"}
 --- error_log
 could not get vector_search result
+
+
 
 === TEST 7: Happy Path (No Rerank) - Check Upstream Body
 --- config
@@ -407,6 +419,8 @@ could not get vector_search result
     }
 --- response_body
 passed
+
+
 
 === TEST 8: Verify Context Injection (No Rerank)
 --- log_level: debug
@@ -479,6 +493,8 @@ qr/Apache APISIX is a dynamic, real-time, high-performance API Gateway.*It provi
     }
 --- response_body
 passed
+
+
 
 === TEST 10: Verify Context Injection (With Rerank)
 --- log_level: debug

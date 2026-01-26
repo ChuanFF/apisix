@@ -61,8 +61,8 @@ The Plugin supports using [OpenAI](https://platform.openai.com/docs/api-referenc
 | rag_config                                      | False        | object   |  | General configuration for the RAG process.                                                                                                 |
 | rag_config.input_strategy                       | False        | string   |  | Strategy for extracting input text from messages. Values: `last` (last user message), `all` (concatenate all user messages). Defaults to `last`.                                     |
 
-
 ### embeddings_provider attributes (for `openai` and `azure`)
+
 Currently supports `openai`, `azure`, `openai-compatible`. All sub-fields are located under the `embeddings_provider.<provider>` object (e.g., `embeddings_provider.openai.api_key`).
 
 | Name        | Required | Type    | Description                                                                 |
@@ -71,7 +71,6 @@ Currently supports `openai`, `azure`, `openai-compatible`. All sub-fields are lo
 | `api_key`   | True     | string  | Access credential (API Key).                                               |
 | `model`     | False     | string  | Model name. Defaults to `text-embedding-3-large`.                         |
 | `dimensions`| False     | integer | Vector dimensions (only supported by `text-embedding-3-*` series).                      |
-
 
 ## Example
 
@@ -182,6 +181,7 @@ curl "http://127.0.0.1:9080/rag" -X POST \
 ```
 
 The plugin will:
+
 1. Extract the user question "Which Azure services are good for DevOps?".
 2. Call Azure OpenAI to generate an embedding vector for the question.
 3. Use the vector to retrieve the top 10 most relevant documents from Azure AI Search (`k=10`).
