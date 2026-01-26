@@ -43,15 +43,15 @@ description: ai-rag 插件通过检索增强生成（RAG）增强 LLM 输出，�
 
 | 名称                                      |   必选项   |   类型   | 有效值 |  描述                                                                                                                             |
 | ----------------------------------------------- | ------------ | -------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| embeddings_provider                             | 是          | object   | openai, azure, openai_compatible | 嵌入模型提供商的配置。必须且只能指定一种，当前支持 `openai`, `azure`, `openai-compatible`                                                                                         |
-| vector_search_provider                          | 是          | object   | azure_ai_search | 向量搜索提供商的配置。                                                                                              |
-| vector_search_provider.azure_ai_search          | 是          | object   |  | Azure AI Search 的配置。                                                                                                         |
-| vector_search_provider.azure_ai_search.endpoint | 是          | string   |  | Azure AI Search 端点。                                                                                                                  |
-| vector_search_provider.azure_ai_search.api_key  | 是          | string   |  | Azure AI Search API 密钥。                                                                                                                  |
-| vector_search_provider.azure_ai_search.fields   | 是          | string   |  | 向量搜索的目标字段。                                                                                           |
-| vector_search_provider.azure_ai_search.select   | 是          | string   |  | 响应中选择返回的字段。                                                                            |
-| vector_search_provider.azure_ai_search.exhaustive| 否         | boolean  |  | 是否进行详尽搜索。默认为 `true`。                                                                                       |
-| vector_search_provider.azure_ai_search.k        | 否          | integer  | >0 | 返回的最近邻数量。默认为 5。                                                                                              |
+| embeddings_provider                             | 是          | object   | openai, azure-openai, openai-compatible | 嵌入模型提供商的配置。必须且只能指定一种，当前支持 `openai`, `azure-openai`, `openai-compatible`                                                                                         |
+| vector_search_provider                          | 是          | object   | azure-ai-search | 向量搜索提供商的配置。                                                                                              |
+| vector_search_provider.azure-ai-search          | 是          | object   |  | Azure AI Search 的配置。                                                                                                         |
+| vector_search_provider.azure-ai-search.endpoint | 是          | string   |  | Azure AI Search 端点。                                                                                                                  |
+| vector_search_provider.azure-ai-search.api_key  | 是          | string   |  | Azure AI Search API 密钥。                                                                                                                  |
+| vector_search_provider.azure-ai-search.fields   | 是          | string   |  | 向量搜索的目标字段。                                                                                           |
+| vector_search_provider.azure-ai-search.select   | 是          | string   |  | 响应中选择返回的字段。                                                                            |
+| vector_search_provider.azure-ai-search.exhaustive| 否         | boolean  |  | 是否进行详尽搜索。默认为 `true`。                                                                                       |
+| vector_search_provider.azure-ai-search.k        | 否          | integer  | >0 | 返回的最近邻数量。默认为 5。                                                                                              |
 | rerank_provider                                 | 否          | object   | cohere | 重排序提供商的配置。                                                                                                |
 | rerank_provider.cohere                          | 否          | object   |  | Cohere Rerank 的配置。                                                                                                            |
 | rerank_provider.cohere.endpoint                 | 否          | string   |  | Cohere Rerank API 端点。默认为 `https://api.cohere.ai/v1/rerank`。                                                               |
@@ -126,13 +126,13 @@ curl "http://127.0.0.1:9180/apisix/admin/routes" -X PUT \
   "plugins": {
     "ai-rag": {
       "embeddings_provider": {
-        "azure": {
+        "azure-openai": {
           "endpoint": "'"$AZ_EMBEDDINGS_ENDPOINT"'",
           "api_key": "'"$AZ_OPENAI_API_KEY"'"
         }
       },
       "vector_search_provider": {
-        "azure_ai_search": {
+        "azure-ai-search": {
           "endpoint": "'"$AZ_AI_SEARCH_ENDPOINT"'",
           "api_key": "'"$AZ_AI_SEARCH_KEY"'",
           "fields": "contentVector",

@@ -43,15 +43,15 @@ The Plugin supports using [OpenAI](https://platform.openai.com/docs/api-referenc
 
 | Name                                      |   Required   |   Type   | Valid Values | Description                                                                                                                             |
 | ----------------------------------------------- | ------------ | -------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| embeddings_provider                             | True         | object   | openai,azure,openai-compatible | Configurations of the embedding models provider. Must and can only specify one. Currently supports openai, azure, openai-compatible.                                                                                         |
-| vector_search_provider                          | True         | object   | azure_ai_search | Configuration for the vector search provider.                                                                                              |
-| vector_search_provider.azure_ai_search          | True         | object   |  | Configuration for Azure AI Search.                                                                                                         |
-| vector_search_provider.azure_ai_search.endpoint | True         | string   |  | Azure AI Search endpoint.                                                                                                                  |
-| vector_search_provider.azure_ai_search.api_key  | True         | string   |  | Azure AI Search API key.                                                                                                                  |
-| vector_search_provider.azure_ai_search.fields   | True         | string   |  | Target fields for vector search.                                                                                           |
-| vector_search_provider.azure_ai_search.select   | True         | string   |  | Fields to select in the response.                                                                            |
-| vector_search_provider.azure_ai_search.exhaustive| False       | boolean  |  | Whether to perform an exhaustive search. Defaults to `true`.                                                                                       |
-| vector_search_provider.azure_ai_search.k        | False        | integer  | >0 | Number of nearest neighbors to return. Defaults to 5.                                                                                              |
+| embeddings_provider                             | True         | object   | openai, azure-openai, openai-compatible | Configurations of the embedding models provider. Must and can only specify one. Currently supports `openai`, `azure-openai`, `openai-compatible`.                                                                                         |
+| vector_search_provider                          | True         | object   | azure-ai-search | Configuration for the vector search provider.                                                                                              |
+| vector_search_provider.azure-ai-search          | True         | object   |  | Configuration for Azure AI Search.                                                                                                         |
+| vector_search_provider.azure-ai-search.endpoint | True         | string   |  | Azure AI Search endpoint.                                                                                                                  |
+| vector_search_provider.azure-ai-search.api_key  | True         | string   |  | Azure AI Search API key.                                                                                                                  |
+| vector_search_provider.azure-ai-search.fields   | True         | string   |  | Target fields for vector search.                                                                                           |
+| vector_search_provider.azure-ai-search.select   | True         | string   |  | Fields to select in the response.                                                                            |
+| vector_search_provider.azure-ai-search.exhaustive| False       | boolean  |  | Whether to perform an exhaustive search. Defaults to `true`.                                                                                       |
+| vector_search_provider.azure-ai-search.k        | False        | integer  | >0 | Number of nearest neighbors to return. Defaults to 5.                                                                                              |
 | rerank_provider                                 | False        | object   | cohere | Configuration for the rerank provider.                                                                                                |
 | rerank_provider.cohere                          | False        | object   |  | Configuration for Cohere Rerank.                                                                                                            |
 | rerank_provider.cohere.endpoint                 | False        | string   |  | Cohere Rerank API endpoint. Defaults to `https://api.cohere.ai/v1/rerank`.                                                               |
@@ -61,9 +61,9 @@ The Plugin supports using [OpenAI](https://platform.openai.com/docs/api-referenc
 | rag_config                                      | False        | object   |  | General configuration for the RAG process.                                                                                                 |
 | rag_config.input_strategy                       | False        | string   |  | Strategy for extracting input text from messages. Values: `last` (last user message), `all` (concatenate all user messages). Defaults to `last`.                                     |
 
-### embeddings_provider attributes (for `openai` and `azure`)
+### embeddings_provider attributes
 
-Currently supports `openai`, `azure`, `openai-compatible`. All sub-fields are located under the `embeddings_provider.<provider>` object (e.g., `embeddings_provider.openai.api_key`).
+Currently supports `openai`, `azure-openai`, `openai-compatible`. All sub-fields are located under the `embeddings_provider.<provider>` object (e.g., `embeddings_provider.openai.api_key`).
 
 | Name        | Required | Type    | Description                                                                 |
 |-------------|--------|---------|----------------------------------------------------------------------|
@@ -126,13 +126,13 @@ curl "http://127.0.0.1:9180/apisix/admin/routes" -X PUT \
   "plugins": {
     "ai-rag": {
       "embeddings_provider": {
-        "azure": {
+        "azure-openai": {
           "endpoint": "'"$AZ_EMBEDDINGS_ENDPOINT"'",
           "api_key": "'"$AZ_OPENAI_API_KEY"'"
         }
       },
       "vector_search_provider": {
-        "azure_ai_search": {
+        "azure-ai-search": {
           "endpoint": "'"$AZ_AI_SEARCH_ENDPOINT"'",
           "api_key": "'"$AZ_AI_SEARCH_KEY"'",
           "fields": "contentVector",

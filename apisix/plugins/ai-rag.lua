@@ -35,7 +35,9 @@ local embeddings_drivers = {}
 local vector_search_drivers = {}
 local rerank_drivers = {}
 
-local input_strategy = {
+local plugin_name = "ai-rag"
+
+local input_strategy_enum = {
     last = "last",
     all = "all"
 }
@@ -55,9 +57,16 @@ local schema = {
                 },
                 {
                     properties = {
-                        azure = openai_base_embeddings_schema
+                        ["azure-openai"] = openai_base_embeddings_schema
                     },
-                    required = { "azure" },
+                    required = { "azure-openai" },
+                    additionalProperties = false
+                },
+                {
+                    properties = {
+                        ["openai-compatible"] = openai_base_embeddings_schema
+                    },
+                    required = { "openai-compatible" },
                     additionalProperties = false
                 }
             },
@@ -94,8 +103,8 @@ local schema = {
             properties = {
                 input_strategy = {
                     type = "string",
-                    enum = { input_strategy.last, input_strategy.all},
-                    default = input_strategy.last,
+                    enum = { input_strategy_enum.last, input_strategy_enum.all},
+                    default = input_strategy_enum.last,
                     description = "Strategy for extracting input text from messages."
                             .. "'last' uses the last user message"
                             .. "'all' concatenates all user messages."
@@ -111,7 +120,7 @@ local schema = {
 local _M = {
     version = 0.1,
     priority = 1060,
-    name = "ai-rag",
+    name = plugin_name,
     schema = schema,
 }
 
@@ -126,13 +135,13 @@ local function get_input_text(messages, strategy)
         return nil
     end
 
-    if strategy == input_strategy.last then
+    if strategy == input_strategy_enum.last then
         for i = #messages, 1, -1 do
             if messages[i].role == "user" then
                 return messages[i].content
             end
         end
-    elseif strategy == input_strategy.all then
+    elseif strategy == input_strategy_enum.all then
         local contents = {}
         for _, msg in ipairs(messages) do
             if msg.role == "user" then
@@ -192,7 +201,7 @@ function _M.access(conf, ctx)
 
     -- 1. Extract Input
     local rag_conf = conf.rag_config or {}
-    local input_strategy = rag_conf.input_strategy or "last"
+    local input_strategy = rag_conf.input_strategy or input_strategy_enum.last
     local input_text = get_input_text(body_tab.messages, input_strategy)
 
     if not input_text then
