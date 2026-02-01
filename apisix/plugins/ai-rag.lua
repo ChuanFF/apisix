@@ -250,9 +250,6 @@ function _M.access(conf, ctx)
 
         if not rerank_driver then
             core.log.error("failed to load rerank driver: ", err)
-            -- If rerank fails to load, should we fail or proceed with original docs?
-            -- Assuming fail for safety, or we could log error and skip rerank.
-            -- Let's return error to be explicit.
             return HTTP_INTERNAL_SERVER_ERROR, "failed to load rerank driver"
         end
 
@@ -261,8 +258,6 @@ function _M.access(conf, ctx)
             docs = reranked_docs
         else
             core.log.error("rerank failed: ", err)
-            -- If rerank execution fails, we might want to fallback to original docs
-            -- or return error. Let's return error for now as configured rerank failed.
             return HTTP_INTERNAL_SERVER_ERROR, "rerank failed"
         end
     end
