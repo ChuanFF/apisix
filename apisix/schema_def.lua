@@ -434,11 +434,6 @@ local upstream_schema = {
                     default = 1,
                     description = "Controls the rate of traffic increase during slow start"
                 },
-                full_weight = {
-                    type = "integer",
-                    minimum = 1,
-                    description = "Full traffic weight after slow start completes"
-                },
                 refresh_interval = {
                     type = "integer",
                     minimum = 1,

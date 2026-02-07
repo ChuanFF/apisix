@@ -58,21 +58,20 @@ local function transform_node(new_nodes, node, wam_up_conf)
     end
 
     node.is_warming_up = false
+    local weight = node.weigt
     if wam_up_conf ~= nil then
         local start_time = node.update_time or nil
-        node.weight = wam_up_conf.full_weight
         if start_time ~= nil then
             local time_since_start_seconds = wam_up_conf.ngx_now - start_time
             if time_since_start_seconds < wam_up_conf.slow_start_time_seconds then
                 node.is_warming_up = true
                 local time_factor = time_since_start_seconds / wam_up_conf.slow_start_time_seconds
-                node.weight = math_floor(wam_up_conf.full_weight *
-                                         math_max(wam_up_conf.min_weight,
-                                         math_pow(time_factor, 1 / wam_up_conf.aggression)))
+                weight = math_floor(node.weight * math_max(wam_up_conf.min_weight,
+                                    math_pow(time_factor, 1 / wam_up_conf.aggression)))
             end
         end
     end
-    new_nodes[node.priority][node.host .. ":" .. node.port] = node.weight
+    new_nodes[node.priority][node.host .. ":" .. node.port] = weight
     return new_nodes
 end
 
