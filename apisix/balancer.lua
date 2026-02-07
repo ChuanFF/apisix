@@ -75,6 +75,7 @@ local function transform_node(new_nodes, node, wam_up_conf)
     return new_nodes
 end
 
+
 local function init_warm_up_conf(upstream)
     if upstream.wam_up_conf ~= nil then
         local wam_up_conf = upstream.wam_up_conf
