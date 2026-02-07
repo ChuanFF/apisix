@@ -60,14 +60,15 @@ local function transform_node(new_nodes, node, wam_up_conf)
     node.is_warming_up = false
     if wam_up_conf ~= nil then
         local start_time = node.update_time or nil
-        node.weight = wam_up_conf.default_weight
+        node.weight = wam_up_conf.full_weight
         if start_time ~= nil then
             local time_since_start_seconds = wam_up_conf.ngx_now - start_time
             if time_since_start_seconds < wam_up_conf.slow_start_time_seconds then
                 node.is_warming_up = true
                 local time_factor = time_since_start_seconds / wam_up_conf.slow_start_time_seconds
-                node.weight = math_floor(wam_up_conf.default_weight *
-                        math_max(wam_up_conf.min_weight, math_pow(time_factor, 1 / wam_up_conf.aggression)))
+                node.weight = math_floor(wam_up_conf.full_weight *
+                                         math_max(wam_up_conf.min_weight,
+                                         math_pow(time_factor, 1 / wam_up_conf.aggression)))
             end
         end
     end
@@ -277,7 +278,7 @@ local function pick_server(route, ctx)
         version = version .. "#" .. checker.status_ver
     end
     if up_conf.wam_up_conf and not up_conf.wam_up_conf.warm_up_done then
-        version = version .. math_floor(ngx_now() / up_conf.wam_up_conf.interval)
+        version = version .. math_floor(ngx_now() / up_conf.wam_up_conf.refresh_interval)
     end
 
     -- the same picker will be used in the whole request, especially during the retry

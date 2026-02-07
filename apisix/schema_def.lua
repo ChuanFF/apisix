@@ -426,25 +426,26 @@ local upstream_schema = {
                     type = "number",
                     minimum = 0,
                     maximum = 1,
-                    description = "min weight percent"
+                    description = "Min weight percent"
                 },
                 aggression = {
                     type = "number",
                     exclusiveMinimum = 0,
                     default = 1,
+                    description = "Controls the rate of traffic increase during slow start"
                 },
-                default_weight = {
+                full_weight = {
                     type = "integer",
                     minimum = 1,
-                    description = "node default weight"
+                    description = "Full traffic weight after slow start completes"
                 },
-                interval = {
+                refresh_interval = {
                     type = "integer",
                     minimum = 1,
-                    description = "refresh rr interval"
+                    description = "Weight update interval in seconds"
                 }
             },
-            required = { "slow_start_time_seconds", "min_weight", "default_weight", "interval" },
+            required = { "slow_start_time_seconds", "min_weight", "full_weight", "refresh_interval" },
         },
         retries = {
             type = "integer",
