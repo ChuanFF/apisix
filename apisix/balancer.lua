@@ -60,8 +60,8 @@ local function transform_node(new_nodes, node, wam_up_conf)
     node.is_warming_up = false
     local weight = node.weigt
     if wam_up_conf ~= nil then
-        local start_time = node.update_time or nil
-        if start_time ~= nil then
+        local start_time = node.update_time
+        if start_time then
             local time_since_start_seconds = wam_up_conf.ngx_now - start_time
             if time_since_start_seconds < wam_up_conf.slow_start_time_seconds then
                 node.is_warming_up = true

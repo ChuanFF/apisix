@@ -26,9 +26,41 @@ local apisix_upstream = require("apisix.upstream")
 local resource = require("apisix.admin.resource")
 local tostring = tostring
 local ipairs = ipairs
+local ngx_now = ngx.now
+
+
+local function update_node_warm_up_timestamps(id, conf)
+    -- warm up only support array format upstream
+    if not conf.nodes or not core.table.isarray(conf.nodes) then
+        return
+    end
+    local previous_upstream
+    previous_upstream = apisix_upstream.get_by_id(id)
+    if not previous_upstream
+            or not previous_upstream.nodes
+            or not core.table.isarray(previous_upstream.nodes) then
+        return
+    end
+    local previous_node_timestamps = {}
+    for _, node in ipairs(previous_upstream.nodes) do
+        local key = node.host .. ":" .. tostring(node.port)
+        previous_node_timestamps[key] = node.update_time
+    end
+
+    for _, node in ipairs(conf.nodes) do
+        if not node.update_time then
+            local key = node.host .. ":" .. tostring(node.port)
+            node.update_time = previous_node_timestamps[key] or ngx_now()
+        end
+    end
+end
 
 
 local function check_conf(id, conf, need_id)
+
+    if conf.warm_up_conf then
+        update_node_warm_up_timestamps(id, conf)
+    end
     local ok, err = apisix_upstream.check_upstream_conf(conf)
     if not ok then
         return nil, {error_msg = err}
