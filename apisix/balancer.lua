@@ -27,7 +27,9 @@ local set_more_tries   = balancer.set_more_tries
 local get_last_failure = balancer.get_last_failure
 local set_timeouts     = balancer.set_timeouts
 local ngx_now          = ngx.now
-
+local math_floor       = math.floor
+local math_max         = math.max
+local math_pow         = math.pow
 local module_name = "balancer"
 local pickers = {}
 
@@ -45,7 +47,7 @@ local _M = {
 }
 
 
-local function transform_node(new_nodes, node)
+local function transform_node(new_nodes, node, wam_up_conf)
     if not new_nodes._priority_index then
         new_nodes._priority_index = {}
     end
@@ -55,8 +57,47 @@ local function transform_node(new_nodes, node)
         core.table.insert(new_nodes._priority_index, node.priority)
     end
 
+    node.is_warming_up = false
+    if wam_up_conf ~= nil then
+        local start_time = node.update_time or nil
+        node.weight = wam_up_conf.default_weight
+        if start_time ~= nil then
+            local time_since_start_seconds = wam_up_conf.ngx_now - start_time
+            if time_since_start_seconds < wam_up_conf.slow_start_time_seconds then
+                node.is_warming_up = true
+                local time_factor = time_since_start_seconds / wam_up_conf.slow_start_time_seconds
+                node.weight = math_floor(wam_up_conf.default_weight *
+                        math_max(wam_up_conf.min_weight, math_pow(time_factor, 1 / wam_up_conf.aggression)))
+            end
+        end
+    end
     new_nodes[node.priority][node.host .. ":" .. node.port] = node.weight
     return new_nodes
+end
+
+local function init_warm_up_conf(upstream)
+    if upstream.wam_up_conf ~= nil then
+        local wam_up_conf = upstream.wam_up_conf
+        wam_up_conf.ngx_now = ngx_now()
+        return upstream.wam_up_conf
+    end
+    return nil
+end
+
+
+local function check_warm_up_done(upstream)
+    if not upstream.wam_up_conf then
+        return
+    end
+
+    local nodes = upstream.nodes
+    for _, node in ipairs(nodes) do
+        if node.is_warming_up then
+            return
+        end
+    end
+
+    upstream.wam_up_conf.warm_up_done = true
 end
 
 
@@ -65,8 +106,9 @@ local function fetch_health_nodes(upstream, checker)
     if not checker then
         local new_nodes = core.table.new(0, #nodes)
         for _, node in ipairs(nodes) do
-            new_nodes = transform_node(new_nodes, node)
+            new_nodes = transform_node(new_nodes, node, init_warm_up_conf(upstream))
         end
+        check_warm_up_done(upstream)
         return new_nodes
     end
 
@@ -77,7 +119,7 @@ local function fetch_health_nodes(upstream, checker)
         local ok, err = healthcheck_manager.fetch_node_status(checker,
                                              node.host, port or node.port, host)
         if ok then
-            up_nodes = transform_node(up_nodes, node)
+            up_nodes = transform_node(up_nodes, node, init_warm_up_conf(upstream))
         elseif err then
             core.log.warn("failed to get health check target status, addr: ",
                 node.host, ":", port or node.port, ", host: ", host, ", err: ", err)
@@ -87,9 +129,10 @@ local function fetch_health_nodes(upstream, checker)
     if core.table.nkeys(up_nodes) == 0 then
         core.log.warn("all upstream nodes is unhealthy, use default")
         for _, node in ipairs(nodes) do
-            up_nodes = transform_node(up_nodes, node)
+            up_nodes = transform_node(up_nodes, node, init_warm_up_conf(upstream))
         end
     end
+    check_warm_up_done(upstream)
 
     return up_nodes
 end
@@ -231,6 +274,9 @@ local function pick_server(route, ctx)
 
     if checker then
         version = version .. "#" .. checker.status_ver
+    end
+    if up_conf.wam_up_conf and not up_conf.wam_up_conf.warm_up_done then
+        version = version .. math_floor(ngx_now() / up_conf.wam_up_conf.interval)
     end
 
     -- the same picker will be used in the whole request, especially during the retry
