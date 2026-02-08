@@ -58,7 +58,7 @@ local function transform_node(new_nodes, node, wam_up_conf)
     end
 
     node.is_warming_up = false
-    local weight = node.weigt
+    local weight = node.weight
     if wam_up_conf ~= nil then
         local start_time = node.update_time
         if start_time then
