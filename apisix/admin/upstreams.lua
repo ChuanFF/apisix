@@ -68,7 +68,7 @@ end
 
 local function check_conf(id, conf, need_id)
 
-    if conf.warm_up_conf then
+    if id and conf.warm_up_conf then
         update_node_warm_up_timestamps(id, conf)
     end
     local ok, err = apisix_upstream.check_upstream_conf(conf)
