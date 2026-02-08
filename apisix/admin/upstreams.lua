@@ -34,7 +34,7 @@ local function update_node_warm_up_timestamps(id, conf)
         return
     end
     -- warm up only support array format upstream
-    if not conf.nodes or not core.table.isarray(conf.nodes) then
+    if not conf or not conf.nodes or not core.table.isarray(conf.nodes) then
         return
     end
 
@@ -61,11 +61,12 @@ local function update_node_warm_up_timestamps(id, conf)
 end
 
 
-local function check_conf(id, conf, need_id)
+local function initialize_conf(id, conf)
+    update_node_warm_up_timestamps(id, conf)
+end
 
-    if id and conf.warm_up_conf then
-        update_node_warm_up_timestamps(id, conf)
-    end
+
+local function check_conf(id, conf, need_id)
     local ok, err = apisix_upstream.check_upstream_conf(conf)
     if not ok then
         return nil, {error_msg = err}
@@ -173,5 +174,6 @@ return resource.new({
     schema = core.schema.upstream,
     checker = check_conf,
     encrypt_conf = encrypt_conf,
-    delete_checker = delete_checker
+    delete_checker = delete_checker,
+    initialize_conf = initialize_conf,
 })

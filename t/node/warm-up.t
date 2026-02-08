@@ -18,7 +18,7 @@
 use t::APISIX 'no_plan';
 
 repeat_each(1);
-log_level('info');
+log_level('warn');
 no_root_location();
 no_shuffle();
 
