@@ -428,3 +428,236 @@ passed
 GET /t
 --- response_body
 passed
+
+
+
+=== TEST 11: create service with inline upstream (starts warm-up)
+--- config
+    location /t {
+        content_by_lua_block {
+            local t = require("lib.test_admin").test
+
+            -- 1. Create Service with inline upstream
+            -- Manually set update_time for 1980 to simulate it being old
+            local code, body = t('/apisix/admin/services/1',
+                 ngx.HTTP_PUT,
+                 [[{
+                    "upstream": {
+                        "type": "roundrobin",
+                        "nodes": [
+                            {"host": "127.0.0.1", "port": 1980, "weight": 100, "update_time": ]] .. ngx.time() - 5 .. [[}
+                        ],
+                        "warm_up_conf": {
+                            "slow_start_time_seconds": 10,
+                            "min_weight_percent": 1,
+                            "aggression": 1.0
+                        }
+                    }
+                }]]
+            )
+            if code >= 300 then
+                ngx.status = code
+                ngx.say("service failed: ", body)
+                return
+            end
+
+            -- 2. Create Route using Service
+            code, body = t('/apisix/admin/routes/service_test',
+                 ngx.HTTP_PUT,
+                 [[{
+                    "uri": "/service_test",
+                    "service_id": "1"
+                }]]
+            )
+
+            if code >= 300 then
+                ngx.status = code
+                ngx.say("route failed: ", body)
+                return
+            end
+
+            -- 3. Update Service to add new node 1981
+            code, body = t('/apisix/admin/services/1',
+                 ngx.HTTP_PUT,
+                 [[{
+                    "upstream": {
+                        "type": "roundrobin",
+                        "nodes": [
+                            {"host": "127.0.0.1", "port": 1980, "weight": 100},
+                            {"host": "127.0.0.1", "port": 1981, "weight": 100}
+                        ],
+                        "warm_up_conf": {
+                            "slow_start_time_seconds": 10,
+                            "min_weight_percent": 1,
+                            "aggression": 1.0
+                        }
+                    }
+                }]]
+            )
+
+            if code >= 300 then
+                ngx.status = code
+                ngx.say("service update failed: ", body)
+                return
+            end
+
+            ngx.say("passed")
+        }
+    }
+--- request
+GET /t
+--- response_body
+passed
+
+
+
+=== TEST 12: verify warm-up traffic skew for service (Node 1980 >> Node 1981)
+--- timeout: 10
+--- config
+    location /t {
+        content_by_lua_block {
+            local http = require "resty.http"
+            local uri = "http://127.0.0.1:" .. ngx.var.server_port
+                        .. "/service_test"
+
+            local ports_count = {}
+            -- Node 1980: fully warmed (weight 100)
+            -- Node 1981: just started (weight ~1)
+
+            for i = 1, 50 do
+                local httpc = http.new()
+                local res, err = httpc:request_uri(uri, {method = "GET"})
+                if not res then
+                    ngx.say(err)
+                    return
+                end
+                ports_count[res.body] = (ports_count[res.body] or 0) + 1
+            end
+
+            local count_80 = ports_count["1980"] or 0
+            local count_81 = ports_count["1981"] or 0
+
+            ngx.log(ngx.INFO, "Service Warm-up check: 1980=", count_80, ", 1981=", count_81)
+
+            -- Expect heavy skew to 1980
+            if count_80 > 30 and count_81 < 20 then
+                ngx.say("passed")
+            else
+                ngx.say("failed: 1980=" .. count_80 .. ", 1981=" .. count_81)
+            end
+        }
+    }
+--- request
+GET /t
+--- response_body
+passed
+
+
+
+=== TEST 13: create route with inline upstream (starts warm-up)
+--- config
+    location /t {
+        content_by_lua_block {
+            local t = require("lib.test_admin").test
+
+            -- 1. Create Route with inline upstream
+            -- Manually set update_time for 1980 to simulate it being old
+            local code, body = t('/apisix/admin/routes/inline_test',
+                 ngx.HTTP_PUT,
+                 [[{
+                    "uri": "/inline_test",
+                    "upstream": {
+                        "type": "roundrobin",
+                        "nodes": [
+                            {"host": "127.0.0.1", "port": 1980, "weight": 100, "update_time": ]] .. ngx.time() - 5 .. [[}
+                        ],
+                        "warm_up_conf": {
+                            "slow_start_time_seconds": 10,
+                            "min_weight_percent": 1,
+                            "aggression": 1.0
+                        }
+                    }
+                }]]
+            )
+            if code >= 300 then
+                ngx.status = code
+                ngx.say("route failed: ", body)
+                return
+            end
+
+            -- 2. Update Route to add new node 1981
+            code, body = t('/apisix/admin/routes/inline_test',
+                 ngx.HTTP_PUT,
+                 [[{
+                    "uri": "/inline_test",
+                    "upstream": {
+                        "type": "roundrobin",
+                        "nodes": [
+                            {"host": "127.0.0.1", "port": 1980, "weight": 100},
+                            {"host": "127.0.0.1", "port": 1981, "weight": 100}
+                        ],
+                        "warm_up_conf": {
+                            "slow_start_time_seconds": 10,
+                            "min_weight_percent": 1,
+                            "aggression": 1.0
+                        }
+                    }
+                }]]
+            )
+
+            if code >= 300 then
+                ngx.status = code
+                ngx.say("route update failed: ", body)
+                return
+            end
+
+            ngx.say("passed")
+        }
+    }
+--- request
+GET /t
+--- response_body
+passed
+
+
+
+=== TEST 14: verify warm-up traffic skew for inline route (Node 1980 >> Node 1981)
+--- timeout: 10
+--- config
+    location /t {
+        content_by_lua_block {
+            local http = require "resty.http"
+            local uri = "http://127.0.0.1:" .. ngx.var.server_port
+                        .. "/inline_test"
+
+            local ports_count = {}
+            -- Node 1980: fully warmed (weight 100)
+            -- Node 1981: just started (weight ~1)
+
+            for i = 1, 50 do
+                local httpc = http.new()
+                local res, err = httpc:request_uri(uri, {method = "GET"})
+                if not res then
+                    ngx.say(err)
+                    return
+                end
+                ports_count[res.body] = (ports_count[res.body] or 0) + 1
+            end
+
+            local count_80 = ports_count["1980"] or 0
+            local count_81 = ports_count["1981"] or 0
+
+            ngx.log(ngx.INFO, "Inline Route Warm-up check: 1980=", count_80, ", 1981=", count_81)
+
+            -- Expect heavy skew to 1980
+            if count_80 > 30 and count_81 < 20 then
+                ngx.say("passed")
+            else
+                ngx.say("failed: 1980=" .. count_80 .. ", 1981=" .. count_81)
+            end
+        }
+    }
+--- request
+GET /t
+--- response_body
+passed
