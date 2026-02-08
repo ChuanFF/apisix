@@ -16,10 +16,13 @@
 --
 local expr = require("resty.expr.v1")
 local core = require("apisix.core")
+local get_routes = require("apisix.router").http_routes
+local get_stream_routes = require("apisix.router").stream_routes
 local apisix_upstream = require("apisix.upstream")
 local resource = require("apisix.admin.resource")
 local schema_plugin = require("apisix.admin.plugins").check_schema
 local plugins_encrypt_conf = require("apisix.admin.plugins").encrypt_conf
+local tostring = tostring
 local type = type
 local loadstring = loadstring
 local ipairs = ipairs
@@ -48,6 +51,24 @@ local function validate_post_arg(node)
         end
     end
     return true
+end
+
+
+local function initialize_conf(id, conf)
+    if not conf.upstream then
+        return
+    end
+
+    local old_upstream
+    local routes = core.config.fetch_created_obj("/routes")
+    if routes then
+        local route = routes:get(tostring(id))
+        if route then
+            old_upstream = route.value.upstream
+        end
+    end
+
+    require("apisix.admin.upstreams").update_warm_up_timestamps(conf.upstream, old_upstream)
 end
 
 
@@ -186,6 +207,7 @@ return resource.new({
     schema = core.schema.route,
     checker = check_conf,
     encrypt_conf = encrypt_conf,
+    initialize_conf = initialize_conf,
     list_filter_fields = {
         service_id = true,
         upstream_id = true,

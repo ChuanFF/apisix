@@ -27,6 +27,23 @@ local type = type
 local loadstring = loadstring
 
 
+local function initialize_conf(id, conf)
+    if not conf.upstream then
+        return
+    end
+
+    local old_upstream
+    local routes = core.config.fetch_created_obj("/services")
+    if routes then
+        local route = routes:get(tostring(id))
+        if route then
+            old_upstream = route.value.upstream
+        end
+    end
+
+    require("apisix.admin.upstreams").update_warm_up_timestamps(conf.upstream, old_upstream)
+end
+
 local function check_conf(id, conf, need_id, schema, opts)
     opts = opts or {}
     local ok, err = core.schema.check(schema, conf)
@@ -134,4 +151,5 @@ return resource.new({
     checker = check_conf,
     encrypt_conf = encrypt_conf,
     delete_checker = delete_checker,
+    initialize_conf = initialize_conf,
 })
