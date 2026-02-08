@@ -30,25 +30,29 @@ local ngx_now = ngx.now
 
 
 local function update_node_warm_up_timestamps(id, conf)
+    if not id then
+        return
+    end
     -- warm up only support array format upstream
     if not conf.nodes or not core.table.isarray(conf.nodes) then
         return
     end
 
-    local previous_upstream = apisix_upstream.get_by_id(id)
-    if not previous_upstream
-            or not previous_upstream.nodes
-            or not core.table.isarray(previous_upstream.nodes) then
-        return
-    end
-
     local previous_node_info = {}
-    for _, node in ipairs(previous_upstream.nodes) do
-        local key = node.host .. ":" .. tostring(node.port)
-        previous_node_info[key] = {
-            exists = true,
-            update_time = node.update_time
-        }
+    local upstreams = core.config.fetch_created_obj("/upstreams")
+    if upstreams then
+        local upstream = upstreams:get(tostring(id))
+        if upstream and upstream.value
+                and upstream.value.nodes
+                and core.table.isarray(upstream.value.nodes) then
+            for _, node in ipairs(upstream.value.nodes) do
+                local key = (node.domain or node.host) .. ":" .. tostring(node.port)
+                previous_node_info[key] = {
+                    exists = true,
+                    update_time = node.update_time
+                }
+            end
+        end
     end
 
     for _, node in ipairs(conf.nodes) do
@@ -58,7 +62,7 @@ local function update_node_warm_up_timestamps(id, conf)
             -- Apply timestamps: inherit existing, keep nil consistency, or initialize new nodes
             if previous_info then
                 node.update_time = previous_info.update_time
-            elseif not previous_info then
+            else
                 node.update_time = ngx_now()
             end
         end

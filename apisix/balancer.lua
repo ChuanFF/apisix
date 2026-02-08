@@ -71,6 +71,10 @@ local function transform_node(new_nodes, node, wam_up_conf)
             end
         end
     end
+    -- Guarantee at least one weight unit to avoid zero traffic during initial warm-up phase
+    if weight == 0 and node.weight > 0 then
+        weight = 1
+    end
     new_nodes[node.priority][node.host .. ":" .. node.port] = weight
     return new_nodes
 end
