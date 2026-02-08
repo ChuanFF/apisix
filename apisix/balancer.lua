@@ -82,17 +82,17 @@ end
 
 
 local function init_warm_up_conf(upstream)
-    if upstream.wam_up_conf ~= nil then
-        local wam_up_conf = upstream.wam_up_conf
+    if upstream.warm_up_conf ~= nil then
+        local wam_up_conf = upstream.warm_up_conf
         wam_up_conf.now = ngx_time()
-        return upstream.wam_up_conf
+        return upstream.warm_up_conf
     end
     return nil
 end
 
 
 local function check_warm_up_done(upstream)
-    if not upstream.wam_up_conf then
+    if not upstream.warm_up_conf then
         return
     end
 
@@ -103,7 +103,7 @@ local function check_warm_up_done(upstream)
         end
     end
 
-    upstream.wam_up_conf.warm_up_done = true
+    upstream.warm_up_conf.warm_up_done = true
 end
 
 
@@ -281,8 +281,8 @@ local function pick_server(route, ctx)
     if checker then
         version = version .. "#" .. checker.status_ver
     end
-    if up_conf.wam_up_conf and not up_conf.wam_up_conf.warm_up_done then
-        version = version .. math_floor(ngx_time() / up_conf.wam_up_conf.refresh_interval)
+    if up_conf.warm_up_conf and not up_conf.warm_up_conf.warm_up_done then
+        version = version .. math_floor(ngx_time() / up_conf.warm_up_conf.refresh_interval)
     end
 
     -- the same picker will be used in the whole request, especially during the retry
