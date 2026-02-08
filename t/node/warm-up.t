@@ -42,7 +42,7 @@ __DATA__
                         {"host": "127.0.0.1", "port": 1980, "weight": 100, "update_time": ]] .. ngx.time() - 5 .. [[}
                     ],
                     "warm_up_conf": {
-                        "slow_start_time_seconds": 3,
+                        "slow_start_time_seconds": 5,
                         "min_weight": 0.01,
                         "refresh_interval": 1,
                         "aggression": 1.0
@@ -97,7 +97,7 @@ passed
                         {"host": "127.0.0.1", "port": 1981, "weight": 100}
                     ],
                     "warm_up_conf": {
-                        "slow_start_time_seconds": 3,
+                        "slow_start_time_seconds": 5,
                         "min_weight": 0.01,
                         "refresh_interval": 1,
                         "aggression": 1.0
