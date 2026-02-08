@@ -234,3 +234,197 @@ passed
 GET /t
 --- response_body
 passed
+
+
+
+=== TEST 6: add domain node
+--- config
+    location /t {
+        content_by_lua_block {
+            local t = require("lib.test_admin").test
+            -- We update the upstream with a new node.
+            -- The existing node (1980) should preserve its update_time (so it stays fully warmed).
+            -- The new node (1981) should get a new update_time (so it starts warming up).
+            local code, body = t('/apisix/admin/upstreams/1',
+                 ngx.HTTP_PUT,
+                 [[{
+                    "id": "1",
+                    "type": "roundrobin",
+                    "nodes": [
+                        {"host": "localhost", "port": 1980, "weight": 100},
+                        {"host": "127.0.0.1", "port": 1981, "weight": 100}
+                    ],
+                    "warm_up_conf": {
+                        "slow_start_time_seconds": 10,
+                        "min_weight_percent": 1,
+                        "aggression": 1.0
+                    }
+                }]]
+            )
+
+            if code >= 300 then
+                ngx.status = code
+            end
+            ngx.say(body)
+        }
+    }
+--- request
+GET /t
+--- response_body
+passed
+
+
+
+=== TEST 7: verify warm-up traffic skew for domain(Node 1980 << Node 1981)
+--- timeout: 10
+--- config
+    location /t {
+        content_by_lua_block {
+            local http = require "resty.http"
+            local uri = "http://127.0.0.1:" .. ngx.var.server_port
+                        .. "/server_port"
+
+            local ports_count = {}
+            -- Node 1980: fully warmed (weight 100)
+            -- Node 1981: just started (weight ~1)
+
+            for i = 1, 50 do
+                local httpc = http.new()
+                local res, err = httpc:request_uri(uri, {method = "GET"})
+                if not res then
+                    ngx.say(err)
+                    return
+                end
+                ports_count[res.body] = (ports_count[res.body] or 0) + 1
+            end
+
+            local count_80 = ports_count["1980"] or 0
+            local count_81 = ports_count["1981"] or 0
+
+            ngx.log(ngx.INFO, "Warm-up check: 1980=", count_80, ", 1981=", count_81)
+
+            -- Expect heavy skew to 1980
+            if count_80 < 20 and count_81 > 30 then
+                ngx.say("passed")
+            else
+                ngx.say("failed: 1980=" .. count_80 .. ", 1981=" .. count_81)
+            end
+        }
+    }
+--- request
+GET /t
+--- response_body
+passed
+
+
+
+=== TEST 8: wait for warm-up to complete for domain
+--- timeout: 10
+--- config
+    location /t {
+        content_by_lua_block {
+            local upstream = require("apisix.upstream").get_by_id(1)
+
+            if upstream and upstream.nodes then
+                local max_update_time = 0
+                for _, node in ipairs(upstream.nodes) do
+                    if node.update_time and node.update_time > max_update_time then
+                        max_update_time = node.update_time
+                    end
+                end
+
+                if max_update_time > 0 then
+                    local now = ngx.time()
+                    local warm_up_duration = upstream.warm_up_conf.slow_start_time_seconds
+                    local elapsed = now - max_update_time
+
+                    if elapsed < warm_up_duration then
+                        ngx.sleep(warm_up_duration - elapsed + 1) -- Add 1s buffer
+                    end
+                end
+            else
+                ngx.say("cannot find upstream id: 1")
+            end
+
+            ngx.say("passed")
+        }
+    }
+--- request
+GET /t
+--- response_body
+passed
+
+
+
+=== TEST 9: update upstream again, update_time should remain unchanged
+--- config
+    location /t {
+        content_by_lua_block {
+            local t = require("lib.test_admin").test
+            local code, body = t('/apisix/admin/upstreams/1',
+                 ngx.HTTP_PUT,
+                 [[{
+                    "id": "1",
+                    "type": "roundrobin",
+                    "nodes": [
+                        {"host": "localhost", "port": 1980, "weight": 100},
+                        {"host": "127.0.0.1", "port": 1981, "weight": 100}
+                    ],
+                    "warm_up_conf": {
+                        "slow_start_time_seconds": 10,
+                        "min_weight_percent": 1,
+                        "aggression": 1.0
+                    }
+                }]]
+            )
+
+            if code >= 300 then
+                ngx.status = code
+            end
+            ngx.say(body)
+        }
+    }
+--- request
+GET /t
+--- response_body
+passed
+
+
+
+=== TEST 10: verify balanced traffic after warm-up for domain
+--- config
+    location /t {
+        content_by_lua_block {
+            local http = require "resty.http"
+            local uri = "http://127.0.0.1:" .. ngx.var.server_port
+                        .. "/server_port"
+
+            local ports_count = {}
+
+            for i = 1, 10 do
+                local httpc = http.new()
+                local res, err = httpc:request_uri(uri, {method = "GET"})
+                if not res then
+                    ngx.say(err)
+                    return
+                end
+                ports_count[res.body] = (ports_count[res.body] or 0) + 1
+            end
+
+            local count_80 = ports_count["1980"] or 0
+            local count_81 = ports_count["1981"] or 0
+
+            ngx.log(ngx.INFO, "Balanced check: 1980=", count_80, ", 1981=", count_81)
+
+            -- Expect balanced traffic
+            if count_80 == count_81 then
+                ngx.say("passed")
+            else
+                ngx.say("failed: 1980=" .. count_80 .. ", 1981=" .. count_81)
+            end
+        }
+    }
+--- request
+GET /t
+--- response_body
+passed
