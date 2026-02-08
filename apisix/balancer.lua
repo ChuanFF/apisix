@@ -30,7 +30,6 @@ local ngx_now          = ngx.now
 local ngx_time         = ngx.time
 local math_floor       = math.floor
 local math_max         = math.max
-local math_pow         = math.pow
 local module_name = "balancer"
 local pickers = {}
 
