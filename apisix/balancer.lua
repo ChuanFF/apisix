@@ -58,14 +58,12 @@ local function transform_node(new_nodes, node, wam_up_conf)
         core.table.insert(new_nodes._priority_index, node.priority)
     end
 
-    node.is_warming_up = false
     local weight = node.weight
     if wam_up_conf ~= nil then
         local start_time = node.update_time
         if start_time then
             local time_since_start_seconds = wam_up_conf.now - start_time
             if time_since_start_seconds < wam_up_conf.slow_start_time_seconds then
-                node.is_warming_up = true
                 local time_factor = time_since_start_seconds / wam_up_conf.slow_start_time_seconds
                 weight = math_floor(node.weight * math_max(wam_up_conf.min_weight,
                                     time_factor ^ (1 / wam_up_conf.aggression)))
@@ -91,22 +89,6 @@ local function init_warm_up_conf(upstream)
 end
 
 
-local function check_warm_up_done(upstream)
-    if not upstream.warm_up_conf then
-        return
-    end
-
-    local nodes = upstream.nodes
-    for _, node in ipairs(nodes) do
-        if node.is_warming_up then
-            return
-        end
-    end
-
-    upstream.warm_up_conf.warm_up_done = true
-end
-
-
 local function fetch_health_nodes(upstream, checker)
     local nodes = upstream.nodes
     if not checker then
@@ -114,7 +96,6 @@ local function fetch_health_nodes(upstream, checker)
         for _, node in ipairs(nodes) do
             new_nodes = transform_node(new_nodes, node, init_warm_up_conf(upstream))
         end
-        check_warm_up_done(upstream)
         return new_nodes
     end
 
@@ -138,7 +119,6 @@ local function fetch_health_nodes(upstream, checker)
             up_nodes = transform_node(up_nodes, node, init_warm_up_conf(upstream))
         end
     end
-    check_warm_up_done(upstream)
 
     return up_nodes
 end
@@ -228,10 +208,10 @@ end
 
 
 local function get_version_with_warm_up(version, up_conf)
-    local warm_up_conf = up_conf.warm_up_conf
-    if not warm_up_conf then
+    if not up_conf.warm_up_conf then
         return version
     end
+    local warm_up_conf = up_conf.warm_up_conf
     local warm_up_end_time = warm_up_conf.warm_up_end_time
     if not warm_up_end_time then
          local max_update_time = 0
@@ -311,7 +291,9 @@ local function pick_server(route, ctx)
         version = version .. "#" .. checker.status_ver
     end
 
-    version = get_version_with_warm_up(version, up_conf)
+    if up_conf.warm_up_conf then
+        version = get_version_with_warm_up(version, up_conf)
+    end
 
     -- the same picker will be used in the whole request, especially during the retry
     local server_picker = ctx.server_picker
