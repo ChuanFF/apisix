@@ -68,7 +68,7 @@ local function transform_node(new_nodes, node, wam_up_conf)
                 node.is_warming_up = true
                 local time_factor = time_since_start_seconds / wam_up_conf.slow_start_time_seconds
                 weight = math_floor(node.weight * math_max(wam_up_conf.min_weight,
-                                    math_pow(time_factor, 1 / wam_up_conf.aggression)))
+                                    time_factor ^ (1 / wam_up_conf.aggression)))
             end
         end
     end

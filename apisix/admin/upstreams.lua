@@ -38,7 +38,7 @@ local function update_node_warm_up_timestamps(id, conf)
         return
     end
 
-    local previous_node_info = {}
+    local previous_node_update_time = {}
     local upstreams = core.config.fetch_created_obj("/upstreams")
     if upstreams then
         local upstream = upstreams:get(tostring(id))
@@ -47,10 +47,7 @@ local function update_node_warm_up_timestamps(id, conf)
                 and core.table.isarray(upstream.value.nodes) then
             for _, node in ipairs(upstream.value.nodes) do
                 local key = (node.domain or node.host) .. ":" .. tostring(node.port)
-                previous_node_info[key] = {
-                    exists = true,
-                    update_time = node.update_time
-                }
+                previous_node_update_time[key] = node.update_time
             end
         end
     end
@@ -58,13 +55,7 @@ local function update_node_warm_up_timestamps(id, conf)
     for _, node in ipairs(conf.nodes) do
         if not node.update_time then
             local key = node.host .. ":" .. tostring(node.port)
-            local previous_info = previous_node_info[key]
-            -- Apply timestamps: inherit existing, keep nil consistency, or initialize new nodes
-            if previous_info then
-                node.update_time = previous_info.update_time
-            else
-                node.update_time = ngx_time()
-            end
+            node.update_time = previous_node_update_time[key] or ngx_time()
         end
     end
 end

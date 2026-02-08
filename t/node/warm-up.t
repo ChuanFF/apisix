@@ -36,6 +36,7 @@ __DATA__
             local code, body = t('/apisix/admin/upstreams/1',
                  ngx.HTTP_PUT,
                  [[{
+                    "id": "1",
                     "type": "roundrobin",
                     "nodes": [
                         {"host": "127.0.0.1", "port": 1980, "weight": 100}
@@ -104,6 +105,7 @@ passed
             local code, body = t('/apisix/admin/upstreams/1',
                  ngx.HTTP_PUT,
                  [[{
+                    "id": "1",
                     "type": "roundrobin",
                     "nodes": [
                         {"host": "127.0.0.1", "port": 1980, "weight": 100},
