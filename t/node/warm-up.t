@@ -43,7 +43,6 @@ __DATA__
                         warm_up_conf = {
                             slow_start_time_seconds = 3,
                             min_weight = 0.01,
-                            full_weight = 100,
                             refresh_interval = 1,
                             aggression = 1.0
                         }
@@ -100,7 +99,6 @@ passed
                         warm_up_conf = {
                             slow_start_time_seconds = 3,
                             min_weight = 0.01,
-                            full_weight = 100,
                             refresh_interval = 1,
                             aggression = 1.0
                         }
