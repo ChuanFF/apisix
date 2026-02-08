@@ -65,8 +65,9 @@ local function transform_node(new_nodes, node, wam_up_conf)
             local time_since_start_seconds = wam_up_conf.now - start_time
             if time_since_start_seconds < wam_up_conf.slow_start_time_seconds then
                 local time_factor = time_since_start_seconds / wam_up_conf.slow_start_time_seconds
-                weight = math_floor(node.weight * math_max(wam_up_conf.min_weight,
-                                    time_factor ^ (1 / wam_up_conf.aggression)))
+                local weight_percent = math_max(wam_up_conf.min_weight_percent / 100,
+                        time_factor ^ (1 / wam_up_conf.aggression))
+                weight = math_floor(node.weight * weight_percent)
             end
         end
     end

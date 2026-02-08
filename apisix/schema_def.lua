@@ -422,10 +422,10 @@ local upstream_schema = {
                     minimum = 1,
                     description = "Slow start window in seconds"
                 },
-                min_weight = {
-                    type = "number",
-                    minimum = 0,
-                    maximum = 1,
+                min_weight_percent = {
+                    type = "integer",
+                    minimum = 1,
+                    maximum = 100,
                     description = "Min weight percent"
                 },
                 aggression = {
@@ -440,7 +440,7 @@ local upstream_schema = {
                     description = "Weight update interval in seconds"
                 }
             },
-            required = { "slow_start_time_seconds", "min_weight", "refresh_interval" },
+            required = { "slow_start_time_seconds", "min_weight_percent", "refresh_interval" },
         },
         retries = {
             type = "integer",
