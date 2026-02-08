@@ -44,7 +44,6 @@ __DATA__
                     "warm_up_conf": {
                         "slow_start_time_seconds": 10,
                         "min_weight_percent": 1,
-                        "refresh_interval": 1,
                         "aggression": 1.0
                     }
                 }]]
@@ -99,7 +98,6 @@ passed
                     "warm_up_conf": {
                         "slow_start_time_seconds": 10,
                         "min_weight_percent": 1,
-                        "refresh_interval": 1,
                         "aggression": 1.0
                     }
                 }]]

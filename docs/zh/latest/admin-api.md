@@ -1034,7 +1034,7 @@ APISIX 的 Upstream 除了基本的负载均衡算法选择外，还支持对上
 |warm_up_conf.slow_start_time_seconds  | 是                                             | integer | 预热持续时间（秒）。 | 30 |
 |warm_up_conf.min_weight_percent  | 是                                             | integer | 预热开始时的最小权重百分比（1-100）。 | 1 |
 |warm_up_conf.aggression  | 否                                             | number | 控制预热期间流量增长的速率，默认为 1。 | 1.0 |
-|warm_up_conf.refresh_interval  | 是                                             | integer | 权重更新间隔（秒）。 | 1 |
+|warm_up_conf.refresh_interval  | 否                                             | integer | 权重更新间隔（秒）。 | 1 |
 
 `type` 详细信息如下：
 

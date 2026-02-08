@@ -1026,7 +1026,7 @@ In addition to the equalization algorithm selections, Upstream also supports pas
 | warm_up_conf.slow_start_time_seconds | True | Integer | Slow start window in seconds. | 30 |
 | warm_up_conf.min_weight_percent | True | Integer | Minimum weight percentage at the start of warm-up (1-100). | 1 |
 | warm_up_conf.aggression | False | Number | Controls the rate of traffic increase during slow start, default is 1. | 1.0 |
-| warm_up_conf.refresh_interval | True | Integer | Weight update interval in seconds. | 1 |
+| warm_up_conf.refresh_interval | False | Integer | Weight update interval in seconds. | 1 |
 
 An Upstream can be one of the following `types`:
 
