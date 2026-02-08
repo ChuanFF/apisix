@@ -227,6 +227,35 @@ local function set_balancer_opts(route, ctx)
 end
 
 
+local function get_version_with_warm_up(version, up_conf)
+    local warm_up_conf = up_conf.warm_up_conf
+    if not warm_up_conf then
+        return version
+    end
+    local warm_up_end_time = warm_up_conf.warm_up_end_time
+    if not warm_up_end_time then
+         local max_update_time = 0
+         for _, node in ipairs(up_conf.nodes) do
+             if node.update_time and node.update_time > max_update_time then
+                 max_update_time = node.update_time
+             end
+         end
+         if max_update_time > 0 then
+             warm_up_end_time = max_update_time + warm_up_conf.slow_start_time_seconds
+             warm_up_conf.warm_up_end_time = warm_up_end_time
+         end
+    end
+
+    if warm_up_end_time and ngx_time() < warm_up_end_time then
+        version = version .. math_floor(ngx_time() / warm_up_conf.refresh_interval)
+    else
+        version = version .. "warm_up_done"
+    end
+    return version
+
+end
+
+
 local function parse_server_for_upstream_host(picked_server, upstream_scheme)
     local standard_port = apisix_upstream.scheme_to_port[upstream_scheme]
     local host = picked_server.domain or picked_server.host
@@ -281,9 +310,8 @@ local function pick_server(route, ctx)
     if checker then
         version = version .. "#" .. checker.status_ver
     end
-    if up_conf.warm_up_conf and not up_conf.warm_up_conf.warm_up_done then
-        version = version .. math_floor(ngx_time() / up_conf.warm_up_conf.refresh_interval)
-    end
+
+    version = get_version_with_warm_up(version, up_conf)
 
     -- the same picker will be used in the whole request, especially during the retry
     local server_picker = ctx.server_picker

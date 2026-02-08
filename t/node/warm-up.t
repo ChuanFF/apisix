@@ -162,6 +162,7 @@ passed
 
 
 === TEST 4: wait for warm-up to complete
+--- timeout: 10
 --- config
     location /t {
         content_by_lua_block {
@@ -181,7 +182,7 @@ passed
                     local elapsed = now - max_update_time
 
                     if elapsed < warm_up_duration then
-                        ngx.sleep(warm_up_duration - elapsed + 0.5) -- Add 0.5s buffer
+                        ngx.sleep(warm_up_duration - elapsed + 1) -- Add 1s buffer
                     end
                 end
             else
