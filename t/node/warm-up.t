@@ -31,29 +31,44 @@ __DATA__
     location /t {
         content_by_lua_block {
             local t = require("lib.test_admin").test
-            local code, body = t('/apisix/admin/routes/1',
+            
+            -- 1. Create Upstream
+            local code, body = t('/apisix/admin/upstreams/1',
+                 ngx.HTTP_PUT,
+                 require("cjson").encode({
+                    type = "roundrobin",
+                    nodes = {
+                        {host = "127.0.0.1", port = 1980, weight = 100}
+                    },
+                    warm_up_conf = {
+                        slow_start_time_seconds = 3,
+                        min_weight = 0.01,
+                        refresh_interval = 1,
+                        aggression = 1.0
+                    }
+                })
+            )
+            if code >= 300 then
+                ngx.status = code
+                ngx.say("upstream failed: ", body)
+                return
+            end
+
+            -- 2. Create Route using Upstream
+            code, body = t('/apisix/admin/routes/1',
                  ngx.HTTP_PUT,
                  require("cjson").encode({
                     uri = "/server_port",
-                    upstream = {
-                        type = "roundrobin",
-                        nodes = {
-                            {host = "127.0.0.1", port = 1980, weight = 100}
-                        },
-                        warm_up_conf = {
-                            slow_start_time_seconds = 3,
-                            min_weight = 0.01,
-                            refresh_interval = 1,
-                            aggression = 1.0
-                        }
-                    }
+                    upstream_id = "1"
                 })
             )
 
             if code >= 300 then
                 ngx.status = code
+                ngx.say("route failed: ", body)
+                return
             end
-            ngx.say(body)
+            ngx.say("passed")
         }
     }
 --- request
@@ -64,6 +79,7 @@ passed
 
 
 === TEST 2: wait for node 1 to finish warm-up
+--- timeout: 10
 --- config
     location /t {
         content_by_lua_block {
@@ -86,22 +102,19 @@ passed
             -- We update the upstream with a new node.
             -- The existing node (1980) should preserve its update_time (so it stays fully warmed).
             -- The new node (1981) should get a new update_time (so it starts warming up).
-            local code, body = t('/apisix/admin/routes/1',
+            local code, body = t('/apisix/admin/upstreams/1',
                  ngx.HTTP_PUT,
                  require("cjson").encode({
-                    uri = "/server_port",
-                    upstream = {
-                        type = "roundrobin",
-                        nodes = {
-                            {host = "127.0.0.1", port = 1980, weight = 100},
-                            {host = "127.0.0.1", port = 1981, weight = 100}
-                        },
-                        warm_up_conf = {
-                            slow_start_time_seconds = 3,
-                            min_weight = 0.01,
-                            refresh_interval = 1,
-                            aggression = 1.0
-                        }
+                    type = "roundrobin",
+                    nodes = {
+                        {host = "127.0.0.1", port = 1980, weight = 100},
+                        {host = "127.0.0.1", port = 1981, weight = 100}
+                    },
+                    warm_up_conf = {
+                        slow_start_time_seconds = 3,
+                        min_weight = 0.01,
+                        refresh_interval = 1,
+                        aggression = 1.0
                     }
                 })
             )
@@ -120,6 +133,7 @@ passed
 
 
 === TEST 4: verify warm-up traffic skew (Node 1980 >> Node 1981)
+--- timeout: 10
 --- config
     location /t {
         content_by_lua_block {
@@ -162,6 +176,7 @@ passed
 
 
 === TEST 5: wait for warm-up to complete
+--- timeout: 10
 --- config
     location /t {
         content_by_lua_block {
@@ -177,6 +192,7 @@ passed
 
 
 === TEST 6: verify balanced traffic after warm-up
+--- timeout: 10
 --- config
     location /t {
         content_by_lua_block {
