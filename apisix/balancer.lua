@@ -27,6 +27,7 @@ local set_more_tries   = balancer.set_more_tries
 local get_last_failure = balancer.get_last_failure
 local set_timeouts     = balancer.set_timeouts
 local ngx_now          = ngx.now
+local ngx_time         = ngx.time
 local math_floor       = math.floor
 local math_max         = math.max
 local math_pow         = math.pow
@@ -62,7 +63,7 @@ local function transform_node(new_nodes, node, wam_up_conf)
     if wam_up_conf ~= nil then
         local start_time = node.update_time
         if start_time then
-            local time_since_start_seconds = wam_up_conf.ngx_now - start_time
+            local time_since_start_seconds = wam_up_conf.now - start_time
             if time_since_start_seconds < wam_up_conf.slow_start_time_seconds then
                 node.is_warming_up = true
                 local time_factor = time_since_start_seconds / wam_up_conf.slow_start_time_seconds
@@ -83,7 +84,7 @@ end
 local function init_warm_up_conf(upstream)
     if upstream.wam_up_conf ~= nil then
         local wam_up_conf = upstream.wam_up_conf
-        wam_up_conf.ngx_now = ngx_now()
+        wam_up_conf.now = ngx_time()
         return upstream.wam_up_conf
     end
     return nil
@@ -281,7 +282,7 @@ local function pick_server(route, ctx)
         version = version .. "#" .. checker.status_ver
     end
     if up_conf.wam_up_conf and not up_conf.wam_up_conf.warm_up_done then
-        version = version .. math_floor(ngx_now() / up_conf.wam_up_conf.refresh_interval)
+        version = version .. math_floor(ngx_time() / up_conf.wam_up_conf.refresh_interval)
     end
 
     -- the same picker will be used in the whole request, especially during the retry

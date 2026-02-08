@@ -26,7 +26,7 @@ local apisix_upstream = require("apisix.upstream")
 local resource = require("apisix.admin.resource")
 local tostring = tostring
 local ipairs = ipairs
-local ngx_now = ngx.now
+local ngx_time = ngx.time
 
 
 local function update_node_warm_up_timestamps(id, conf)
@@ -63,7 +63,7 @@ local function update_node_warm_up_timestamps(id, conf)
             if previous_info then
                 node.update_time = previous_info.update_time
             else
-                node.update_time = ngx_now()
+                node.update_time = ngx_time()
             end
         end
     end

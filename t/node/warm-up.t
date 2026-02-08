@@ -31,7 +31,7 @@ __DATA__
     location /t {
         content_by_lua_block {
             local t = require("lib.test_admin").test
-            
+
             -- 1. Create Upstream
             local code, body = t('/apisix/admin/upstreams/1',
                  ngx.HTTP_PUT,
@@ -140,11 +140,11 @@ passed
             local http = require "resty.http"
             local uri = "http://127.0.0.1:" .. ngx.var.server_port
                         .. "/server_port"
-            
+
             local ports_count = {}
             -- Node 1980: fully warmed (weight 100)
             -- Node 1981: just started (weight ~1)
-            
+
             for i = 1, 100 do
                 local httpc = http.new()
                 local res, err = httpc:request_uri(uri, {method = "GET"})
@@ -154,12 +154,12 @@ passed
                 end
                 ports_count[res.body] = (ports_count[res.body] or 0) + 1
             end
-            
+
             local count_80 = ports_count["1980"] or 0
             local count_81 = ports_count["1981"] or 0
-            
+
             ngx.log(ngx.INFO, "Warm-up check: 1980=", count_80, ", 1981=", count_81)
-            
+
             -- Expect heavy skew to 1980
             if count_80 > 80 and count_81 < 20 then
                 ngx.say("passed")
@@ -199,9 +199,9 @@ passed
             local http = require "resty.http"
             local uri = "http://127.0.0.1:" .. ngx.var.server_port
                         .. "/server_port"
-            
+
             local ports_count = {}
-            
+
             for i = 1, 100 do
                 local httpc = http.new()
                 local res, err = httpc:request_uri(uri, {method = "GET"})
@@ -211,12 +211,12 @@ passed
                 end
                 ports_count[res.body] = (ports_count[res.body] or 0) + 1
             end
-            
+
             local count_80 = ports_count["1980"] or 0
             local count_81 = ports_count["1981"] or 0
-            
+
             ngx.log(ngx.INFO, "Balanced check: 1980=", count_80, ", 1981=", count_81)
-            
+
             -- Expect balanced traffic
             if count_80 > 30 and count_81 > 30 then
                 ngx.say("passed")
