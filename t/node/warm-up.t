@@ -462,10 +462,10 @@ passed
             end
 
             -- 2. Create Route using Service
-            code, body = t('/apisix/admin/routes/service_test',
+            code, body = t('/apisix/admin/routes/1',
                  ngx.HTTP_PUT,
                  [[{
-                    "uri": "/service_test",
+                    "uri": "/server_port",
                     "service_id": "1"
                 }]]
             )
@@ -518,7 +518,7 @@ passed
         content_by_lua_block {
             local http = require "resty.http"
             local uri = "http://127.0.0.1:" .. ngx.var.server_port
-                        .. "/service_test"
+                        .. "/server_port"
 
             local ports_count = {}
             -- Node 1980: fully warmed (weight 100)
@@ -562,10 +562,10 @@ passed
 
             -- 1. Create Route with inline upstream
             -- Manually set update_time for 1980 to simulate it being old
-            local code, body = t('/apisix/admin/routes/inline_test',
+            local code, body = t('/apisix/admin/routes/1',
                  ngx.HTTP_PUT,
                  [[{
-                    "uri": "/inline_test",
+                    "uri": "/server_port",
                     "upstream": {
                         "type": "roundrobin",
                         "nodes": [
@@ -586,10 +586,10 @@ passed
             end
 
             -- 2. Update Route to add new node 1981
-            code, body = t('/apisix/admin/routes/inline_test',
+            code, body = t('/apisix/admin/routes/1',
                  ngx.HTTP_PUT,
                  [[{
-                    "uri": "/inline_test",
+                    "uri": "/server_port",
                     "upstream": {
                         "type": "roundrobin",
                         "nodes": [
@@ -628,7 +628,7 @@ passed
         content_by_lua_block {
             local http = require "resty.http"
             local uri = "http://127.0.0.1:" .. ngx.var.server_port
-                        .. "/inline_test"
+                        .. "/server_port"
 
             local ports_count = {}
             -- Node 1980: fully warmed (weight 100)
