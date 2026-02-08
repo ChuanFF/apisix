@@ -39,7 +39,7 @@ __DATA__
                     "id": "1",
                     "type": "roundrobin",
                     "nodes": [
-                        {"host": "127.0.0.1", "port": 1980, "weight": 100}
+                        {"host": "127.0.0.1", "port": 1980, "weight": 100, "update_time": ]] .. ngx.time() - 5 .. [[}
                     ],
                     "warm_up_conf": {
                         "slow_start_time_seconds": 3,
@@ -79,22 +79,7 @@ passed
 
 
 
-=== TEST 2: wait for node 1 to finish warm-up
---- config
-    location /t {
-        content_by_lua_block {
-            ngx.sleep(3.5)
-            ngx.say("passed")
-        }
-    }
---- request
-GET /t
---- response_body
-passed
-
-
-
-=== TEST 3: add new node (auto-detects as new and warms up)
+=== TEST 2: add new node (auto-detects as new and warms up)
 --- config
     location /t {
         content_by_lua_block {
@@ -133,7 +118,7 @@ passed
 
 
 
-=== TEST 4: verify warm-up traffic skew (Node 1980 >> Node 1981)
+=== TEST 3: verify warm-up traffic skew (Node 1980 >> Node 1981)
 --- timeout: 20
 --- config
     location /t {
@@ -176,7 +161,7 @@ passed
 
 
 
-=== TEST 5: wait for warm-up to complete
+=== TEST 4: wait for warm-up to complete
 --- config
     location /t {
         content_by_lua_block {
@@ -191,7 +176,7 @@ passed
 
 
 
-=== TEST 6: verify balanced traffic after warm-up
+=== TEST 5: verify balanced traffic after warm-up
 --- timeout: 20
 --- config
     location /t {
