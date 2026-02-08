@@ -440,7 +440,7 @@ local upstream_schema = {
                     description = "Weight update interval in seconds"
                 }
             },
-            required = { "slow_start_time_seconds", "min_weight", "full_weight", "refresh_interval" },
+            required = { "slow_start_time_seconds", "min_weight", "refresh_interval" },
         },
         retries = {
             type = "integer",
