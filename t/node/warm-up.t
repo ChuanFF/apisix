@@ -165,7 +165,29 @@ passed
 --- config
     location /t {
         content_by_lua_block {
-            ngx.sleep(3.5)
+            local upstream = require("apisix.upstream").get_by_id("1")
+
+            if upstream and upstream.nodes then
+                local max_update_time = 0
+                for _, node in ipairs(upstream.nodes) do
+                    if node.update_time and node.update_time > max_update_time then
+                        max_update_time = node.update_time
+                    end
+                end
+
+                if max_update_time > 0 then
+                    local now = ngx.time()
+                    local warm_up_duration = upstream.warm_up_conf.slow_start_time_seconds
+                    local elapsed = now - max_update_time
+
+                    if elapsed < warm_up_duration then
+                        ngx.sleep(warm_up_duration - elapsed + 0.5) -- Add 0.5s buffer
+                    end
+                end
+            else
+                ngx.say("cannot find upstream id: 1")
+            end
+
             ngx.say("passed")
         }
     }
