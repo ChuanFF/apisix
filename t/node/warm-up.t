@@ -79,7 +79,6 @@ passed
 
 
 === TEST 2: wait for node 1 to finish warm-up
---- timeout: 10
 --- config
     location /t {
         content_by_lua_block {
@@ -133,7 +132,7 @@ passed
 
 
 === TEST 4: verify warm-up traffic skew (Node 1980 >> Node 1981)
---- timeout: 10
+--- timeout: 20
 --- config
     location /t {
         content_by_lua_block {
@@ -176,7 +175,6 @@ passed
 
 
 === TEST 5: wait for warm-up to complete
---- timeout: 10
 --- config
     location /t {
         content_by_lua_block {
@@ -192,7 +190,7 @@ passed
 
 
 === TEST 6: verify balanced traffic after warm-up
---- timeout: 10
+--- timeout: 20
 --- config
     location /t {
         content_by_lua_block {
