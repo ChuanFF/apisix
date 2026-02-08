@@ -35,18 +35,18 @@ __DATA__
             -- 1. Create Upstream
             local code, body = t('/apisix/admin/upstreams/1',
                  ngx.HTTP_PUT,
-                 require("cjson").encode({
-                    type = "roundrobin",
-                    nodes = {
-                        {host = "127.0.0.1", port = 1980, weight = 100}
-                    },
-                    warm_up_conf = {
-                        slow_start_time_seconds = 3,
-                        min_weight = 0.01,
-                        refresh_interval = 1,
-                        aggression = 1.0
+                 [[{
+                    "type": "roundrobin",
+                    "nodes": [
+                        {"host": "127.0.0.1", "port": 1980, "weight": 100}
+                    ],
+                    "warm_up_conf": {
+                        "slow_start_time_seconds": 3,
+                        "min_weight": 0.01,
+                        "refresh_interval": 1,
+                        "aggression": 1.0
                     }
-                })
+                }]]
             )
             if code >= 300 then
                 ngx.status = code
@@ -57,10 +57,10 @@ __DATA__
             -- 2. Create Route using Upstream
             code, body = t('/apisix/admin/routes/1',
                  ngx.HTTP_PUT,
-                 require("cjson").encode({
-                    uri = "/server_port",
-                    upstream_id = "1"
-                })
+                 [[{
+                    "uri": "/server_port",
+                    "upstream_id": "1"
+                }]]
             )
 
             if code >= 300 then
@@ -104,19 +104,19 @@ passed
             -- The new node (1981) should get a new update_time (so it starts warming up).
             local code, body = t('/apisix/admin/upstreams/1',
                  ngx.HTTP_PUT,
-                 require("cjson").encode({
-                    type = "roundrobin",
-                    nodes = {
-                        {host = "127.0.0.1", port = 1980, weight = 100},
-                        {host = "127.0.0.1", port = 1981, weight = 100}
-                    },
-                    warm_up_conf = {
-                        slow_start_time_seconds = 3,
-                        min_weight = 0.01,
-                        refresh_interval = 1,
-                        aggression = 1.0
+                 [[{
+                    "type": "roundrobin",
+                    "nodes": [
+                        {"host": "127.0.0.1", "port": 1980, "weight": 100},
+                        {"host": "127.0.0.1", "port": 1981, "weight": 100}
+                    ],
+                    "warm_up_conf": {
+                        "slow_start_time_seconds": 3,
+                        "min_weight": 0.01,
+                        "refresh_interval": 1,
+                        "aggression": 1.0
                     }
-                })
+                }]]
             )
 
             if code >= 300 then
