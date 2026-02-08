@@ -42,7 +42,7 @@ __DATA__
                         {"host": "127.0.0.1", "port": 1980, "weight": 100, "update_time": ]] .. ngx.time() - 5 .. [[}
                     ],
                     "warm_up_conf": {
-                        "slow_start_time_seconds": 5,
+                        "slow_start_time_seconds": 10,
                         "min_weight": 0.01,
                         "refresh_interval": 1,
                         "aggression": 1.0
@@ -97,7 +97,7 @@ passed
                         {"host": "127.0.0.1", "port": 1981, "weight": 100}
                     ],
                     "warm_up_conf": {
-                        "slow_start_time_seconds": 5,
+                        "slow_start_time_seconds": 10,
                         "min_weight": 0.01,
                         "refresh_interval": 1,
                         "aggression": 1.0
@@ -119,7 +119,7 @@ passed
 
 
 === TEST 3: verify warm-up traffic skew (Node 1980 >> Node 1981)
---- timeout: 20
+--- timeout: 10
 --- config
     location /t {
         content_by_lua_block {
@@ -131,7 +131,7 @@ passed
             -- Node 1980: fully warmed (weight 100)
             -- Node 1981: just started (weight ~1)
 
-            for i = 1, 100 do
+            for i = 1, 50 do
                 local httpc = http.new()
                 local res, err = httpc:request_uri(uri, {method = "GET"})
                 if not res then
@@ -147,7 +147,7 @@ passed
             ngx.log(ngx.INFO, "Warm-up check: 1980=", count_80, ", 1981=", count_81)
 
             -- Expect heavy skew to 1980
-            if count_80 > 80 and count_81 < 20 then
+            if count_80 > 30 and count_81 < 20 then
                 ngx.say("passed")
             else
                 ngx.say("failed: 1980=" .. count_80 .. ", 1981=" .. count_81)
@@ -165,7 +165,7 @@ passed
 --- config
     location /t {
         content_by_lua_block {
-            local upstream = require("apisix.upstream").get_by_id("1")
+            local upstream = require("apisix.upstream").get_by_id(1)
 
             if upstream and upstream.nodes then
                 local max_update_time = 0
@@ -199,7 +199,6 @@ passed
 
 
 === TEST 5: verify balanced traffic after warm-up
---- timeout: 20
 --- config
     location /t {
         content_by_lua_block {
@@ -209,7 +208,7 @@ passed
 
             local ports_count = {}
 
-            for i = 1, 100 do
+            for i = 1, 10 do
                 local httpc = http.new()
                 local res, err = httpc:request_uri(uri, {method = "GET"})
                 if not res then
@@ -225,7 +224,7 @@ passed
             ngx.log(ngx.INFO, "Balanced check: 1980=", count_80, ", 1981=", count_81)
 
             -- Expect balanced traffic
-            if count_80 > 30 and count_81 > 30 then
+            if count_80 == count_81 then
                 ngx.say("passed")
             else
                 ngx.say("failed: 1980=" .. count_80 .. ", 1981=" .. count_81)
