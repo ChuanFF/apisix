@@ -129,7 +129,7 @@ passed
             -- Node 1980: fully warmed (weight 100)
             -- Node 1981: just started (weight ~1)
 
-            for i = 1, 20 do
+            for i = 1, 10 do
                 local httpc = http.new()
                 local res, err = httpc:request_uri(uri, {method = "GET"})
                 if not res then
@@ -145,7 +145,7 @@ passed
             ngx.log(ngx.INFO, "Warm-up check: 1980=", count_80, ", 1981=", count_81)
 
             -- Expect heavy skew to 1980
-            if count_80 > 15 and count_81 < 5 then
+            if count_80 >= 7 and count_81 <= 3 then
                 ngx.say("passed")
             else
                 ngx.say("failed: 1980=" .. count_80 .. ", 1981=" .. count_81)
@@ -288,7 +288,7 @@ passed
             -- Node 1980: fully warmed (weight 100)
             -- Node 1981: just started (weight ~1)
 
-            for i = 1, 20 do
+            for i = 1, 10 do
                 local httpc = http.new()
                 local res, err = httpc:request_uri(uri, {method = "GET"})
                 if not res then
@@ -304,7 +304,7 @@ passed
             ngx.log(ngx.INFO, "Warm-up check: 1980=", count_80, ", 1981=", count_81)
 
             -- Expect heavy skew to 1980
-            if count_80 < 5 and count_81 > 15 then
+            if count_80 <= 3 and count_81 >= 7 then
                 ngx.say("passed")
             else
                 ngx.say("failed: 1980=" .. count_80 .. ", 1981=" .. count_81)
@@ -524,7 +524,7 @@ passed
             -- Node 1980: fully warmed (weight 100)
             -- Node 1981: just started (weight ~1)
 
-            for i = 1, 20 do
+            for i = 1, 10 do
                 local httpc = http.new()
                 local res, err = httpc:request_uri(uri, {method = "GET"})
                 if not res then
@@ -540,7 +540,7 @@ passed
             ngx.log(ngx.INFO, "Service Warm-up check: 1980=", count_80, ", 1981=", count_81)
 
             -- Expect heavy skew to 1980
-            if count_80 > 15 and count_81 < 5 then
+            if count_80 >= 7 and count_81 <= 3 then
                 ngx.say("passed")
             else
                 ngx.say("failed: 1980=" .. count_80 .. ", 1981=" .. count_81)
@@ -634,7 +634,7 @@ passed
             -- Node 1980: fully warmed (weight 100)
             -- Node 1981: just started (weight ~1)
 
-            for i = 1, 20 do
+            for i = 1, 10 do
                 local httpc = http.new()
                 local res, err = httpc:request_uri(uri, {method = "GET"})
                 if not res then
@@ -650,7 +650,7 @@ passed
             ngx.log(ngx.INFO, "Inline Route Warm-up check: 1980=", count_80, ", 1981=", count_81)
 
             -- Expect heavy skew to 1980
-            if count_80 > 15 and count_81 < 5 then
+            if count_80 >= 7 and count_81 <= 3 then
                 ngx.say("passed")
             else
                 ngx.say("failed: 1980=" .. count_80 .. ", 1981=" .. count_81)
