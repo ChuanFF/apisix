@@ -47,7 +47,7 @@ local _M = {
 }
 
 
-local function transform_node(new_nodes, node, wam_up_conf)
+local function transform_node(new_nodes, node, warm_up_conf)
     if not new_nodes._priority_index then
         new_nodes._priority_index = {}
     end
@@ -58,15 +58,15 @@ local function transform_node(new_nodes, node, wam_up_conf)
     end
 
     local weight = node.weight
-    if wam_up_conf ~= nil then
+    if warm_up_conf then
         local start_time = node.update_time
         if start_time then
-            local time_since_start_seconds = wam_up_conf.now - start_time
-            if time_since_start_seconds < wam_up_conf.slow_start_time_seconds then
-                local time_factor = time_since_start_seconds / wam_up_conf.slow_start_time_seconds
-                local weight_percent = math_max(wam_up_conf.min_weight_percent / 100,
-                        time_factor ^ (1 / wam_up_conf.aggression))
-                weight = math_floor(node.weight * weight_percent)
+            local time_since_start_seconds = math_max(ngx_time() - start_time, 1)
+            if time_since_start_seconds < warm_up_conf.slow_start_time_seconds then
+                local time_factor = time_since_start_seconds / warm_up_conf.slow_start_time_seconds
+                local ramped_weight_ratio = math_max(warm_up_conf.min_weight_percent / 100,
+                        time_factor ^ (1 / warm_up_conf.aggression))
+                weight = math_floor(node.weight * ramped_weight_ratio)
             end
         end
     end
@@ -79,22 +79,12 @@ local function transform_node(new_nodes, node, wam_up_conf)
 end
 
 
-local function init_warm_up_conf(upstream)
-    if upstream.warm_up_conf ~= nil then
-        local wam_up_conf = upstream.warm_up_conf
-        wam_up_conf.now = ngx_time()
-        return upstream.warm_up_conf
-    end
-    return nil
-end
-
-
 local function fetch_health_nodes(upstream, checker)
     local nodes = upstream.nodes
     if not checker then
         local new_nodes = core.table.new(0, #nodes)
         for _, node in ipairs(nodes) do
-            new_nodes = transform_node(new_nodes, node, init_warm_up_conf(upstream))
+            new_nodes = transform_node(new_nodes, node, upstream.warm_up_conf)
         end
         return new_nodes
     end
@@ -106,7 +96,7 @@ local function fetch_health_nodes(upstream, checker)
         local ok, err = healthcheck_manager.fetch_node_status(checker,
                                              node.host, port or node.port, host)
         if ok then
-            up_nodes = transform_node(up_nodes, node, init_warm_up_conf(upstream))
+            up_nodes = transform_node(up_nodes, node, upstream.warm_up_conf)
         elseif err then
             core.log.warn("failed to get health check target status, addr: ",
                 node.host, ":", port or node.port, ", host: ", host, ", err: ", err)
@@ -116,7 +106,7 @@ local function fetch_health_nodes(upstream, checker)
     if core.table.nkeys(up_nodes) == 0 then
         core.log.warn("all upstream nodes is unhealthy, use default")
         for _, node in ipairs(nodes) do
-            up_nodes = transform_node(up_nodes, node, init_warm_up_conf(upstream))
+            up_nodes = transform_node(up_nodes, node, upstream.warm_up_conf)
         end
     end
 
