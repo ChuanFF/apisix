@@ -180,7 +180,7 @@ passed
                     local elapsed = now - max_update_time
 
                     if elapsed < warm_up_duration then
-                        ngx.sleep(warm_up_duration - elapsed + 1) -- Add 1s buffer
+                        ngx.sleep(warm_up_duration - elapsed)
                     end
                 end
             else
@@ -339,7 +339,7 @@ passed
                     local elapsed = now - max_update_time
 
                     if elapsed < warm_up_duration then
-                        ngx.sleep(warm_up_duration - elapsed + 1) -- Add 1s buffer
+                        ngx.sleep(warm_up_duration - elapsed)
                     end
                 end
             else
