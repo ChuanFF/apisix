@@ -198,7 +198,7 @@ end
 
 
 local function get_version_with_warm_up(version, up_conf)
-    if not up_conf.warm_up_conf then
+    if not up_conf.warm_up_conf or up_conf.warm_up_conf.finish then
         return version
     end
     local warm_up_conf = up_conf.warm_up_conf
@@ -218,6 +218,8 @@ local function get_version_with_warm_up(version, up_conf)
 
     if warm_up_end_time and ngx_time() < warm_up_end_time then
         version = version .. math_floor(ngx_time() / warm_up_conf.interval)
+    else
+        warm_up_conf.finish = true
     end
     return version
 
