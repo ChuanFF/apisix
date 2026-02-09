@@ -18,6 +18,7 @@ local core = require("apisix.core")
 local get_routes = require("apisix.router").http_routes
 local get_stream_routes = require("apisix.router").stream_routes
 local apisix_upstream = require("apisix.upstream")
+local upstreams = require("apisix.admin.upstreams")
 local resource = require("apisix.admin.resource")
 local schema_plugin = require("apisix.admin.plugins").check_schema
 local plugins_encrypt_conf = require("apisix.admin.plugins").encrypt_conf
@@ -33,15 +34,15 @@ local function initialize_conf(id, conf)
     end
 
     local old_upstream
-    local routes = core.config.fetch_created_obj("/services")
-    if routes then
-        local route = routes:get(tostring(id))
-        if route then
-            old_upstream = route.value.upstream
+    local services = core.config.fetch_created_obj("/services")
+    if services then
+        local service = services:get(tostring(id))
+        if service then
+            old_upstream = service.value and service.value.upstream
         end
     end
 
-    require("apisix.admin.upstreams").update_warm_up_timestamps(conf.upstream, old_upstream)
+    upstreams.update_warm_up_timestamps(conf.upstream, old_upstream)
 end
 
 local function check_conf(id, conf, need_id, schema, opts)
