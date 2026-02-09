@@ -42,7 +42,7 @@ __DATA__
                         {"host": "127.0.0.1", "port": 1980, "weight": 100, "update_time": ]] .. ngx.time() - 10 .. [[}
                     ],
                     "warm_up_conf": {
-                        "slow_start_time_seconds": 10,
+                        "slow_start_time_seconds": 5,
                         "min_weight_percent": 1,
                         "aggression": 1.0
                     }
@@ -96,7 +96,7 @@ passed
                         {"host": "127.0.0.1", "port": 1981, "weight": 100}
                     ],
                     "warm_up_conf": {
-                        "slow_start_time_seconds": 10,
+                        "slow_start_time_seconds": 5,
                         "min_weight_percent": 1,
                         "aggression": 1.0
                     }
@@ -255,7 +255,7 @@ passed
                         {"host": "127.0.0.1", "port": 1981, "weight": 100}
                     ],
                     "warm_up_conf": {
-                        "slow_start_time_seconds": 10,
+                        "slow_start_time_seconds": 5,
                         "min_weight_percent": 1,
                         "aggression": 1.0
                     }
@@ -371,7 +371,7 @@ passed
                         {"host": "127.0.0.1", "port": 1981, "weight": 100}
                     ],
                     "warm_up_conf": {
-                        "slow_start_time_seconds": 10,
+                        "slow_start_time_seconds": 5,
                         "min_weight_percent": 1,
                         "aggression": 1.0
                     }
@@ -448,7 +448,7 @@ passed
                             {"host": "127.0.0.1", "port": 1980, "weight": 100, "update_time": ]] .. ngx.time() - 10 .. [[}
                         ],
                         "warm_up_conf": {
-                            "slow_start_time_seconds": 10,
+                            "slow_start_time_seconds": 5,
                             "min_weight_percent": 1,
                             "aggression": 1.0
                         }
@@ -487,7 +487,7 @@ passed
                             {"host": "127.0.0.1", "port": 1981, "weight": 100}
                         ],
                         "warm_up_conf": {
-                            "slow_start_time_seconds": 10,
+                            "slow_start_time_seconds": 5,
                             "min_weight_percent": 1,
                             "aggression": 1.0
                         }
@@ -572,7 +572,7 @@ passed
                             {"host": "127.0.0.1", "port": 1980, "weight": 100, "update_time": ]] .. ngx.time() - 10 .. [[}
                         ],
                         "warm_up_conf": {
-                            "slow_start_time_seconds": 10,
+                            "slow_start_time_seconds": 5,
                             "min_weight_percent": 1,
                             "aggression": 1.0
                         }
@@ -597,7 +597,7 @@ passed
                             {"host": "127.0.0.1", "port": 1981, "weight": 100}
                         ],
                         "warm_up_conf": {
-                            "slow_start_time_seconds": 10,
+                            "slow_start_time_seconds": 5,
                             "min_weight_percent": 1,
                             "aggression": 1.0
                         }
