@@ -365,6 +365,11 @@ local function uri_matches_skip_mtls_route_patterns(ssl, uri)
             return true
         end
     end
+
+    local discovery = require("apisix.discovery.init").discovery
+    if discovery and discovery.init then
+        discovery.init()
+    end
 end
 
 

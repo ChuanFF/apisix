@@ -506,7 +506,17 @@ local _M = {
 }
 
 
-local function start_fetch(handle)
+local function start_fetch(handle, immediate)
+    if immediate then
+        -- 立即同步执行一次，不使用 timer
+        local ok, status = pcall(handle.list_watch, handle, handle.apiserver, true)
+        if not ok then
+            core.log.error("list_watch failed, kind: ", handle.kind,
+                           ", reason: RuntimeException, message: ", status)
+        end
+        return
+    end
+
     local timer_runner
     timer_runner = function(premature)
         if premature then
@@ -518,7 +528,7 @@ local function start_fetch(handle)
         local retry_interval = 0
         if not ok then
             core.log.error("list_watch failed, kind: ", handle.kind,
-                    ", reason: ", "RuntimeException", ", message : ", status)
+                           ", reason: RuntimeException, message: ", status)
             retry_interval = 40
         elseif not status then
             retry_interval = 40
@@ -558,7 +568,7 @@ local function single_mode_init(conf)
                 "please check your APISIX version")
     end
 
-    if process.type() ~= "privileged agent" then
+    if process.type() == "worker" then
         ctx = endpoint_dict
         return
     end
@@ -605,7 +615,7 @@ local function single_mode_init(conf)
         default_weight = default_weight
     }, { __index = endpoints_informer })
 
-    start_fetch(ctx)
+    start_fetch(ctx, process.type() == "master")
 end
 
 
@@ -653,7 +663,7 @@ end
 local function multiple_mode_init(confs)
     ctx = core.table.new(#confs, 0)
 
-    if process.type() ~= "privileged agent" then
+    if process.type() == "worker" then
         multiple_mode_worker_init(confs)
         return
     end
@@ -716,7 +726,7 @@ local function multiple_mode_init(confs)
     end
 
     for _, item in pairs(ctx) do
-        start_fetch(item)
+        start_fetch(item, process.type() == "master")
     end
 end
 
@@ -760,6 +770,9 @@ function _M.init_worker()
         multiple_mode_init(discovery_conf)
     end
 end
+
+
+_M.init = _M.init_worker
 
 
 local function dump_endpoints_from_dict(endpoint_dict)
