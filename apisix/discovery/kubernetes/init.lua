@@ -508,7 +508,8 @@ local _M = {
 
 local function start_fetch(handle, immediate)
     if immediate then
-        -- 立即同步执行一次，不使用 timer
+        -- Execute immediately and synchronously without using timer
+        core.log.info(process.type(), " process immediately pulls the k8s endpoints list")
         local ok, status = pcall(handle.list_watch, handle, handle.apiserver, true)
         if not ok then
             core.log.error("list_watch failed, kind: ", handle.kind,
