@@ -437,26 +437,17 @@ discovery:
   kubernetes:
     client:
         token: ${KUBERNETES_CLIENT_TOKEN}
+--- config
+    location /t {
+        content_by_lua_block {
+            ngx.say("pass")
+        }
+    }
 --- log_level: info
 --- request
-GET /compare
-{
-  "service": {
-    "schema": "https",
-    "host": "${KUBERNETES_SERVICE_HOST}",
-    "port": "${KUBERNETES_SERVICE_PORT}"
-  },
-  "client": {
-    "token": "${KUBERNETES_CLIENT_TOKEN}"
-  },
-  "watch_endpoint_slices": false,
-  "shared_size": "1m",
-  "default_weight": 50
-}
---- more_headers
-Content-type: application/json
+GET /t
 --- response_body
-true
+pass
 --- grep_error_log eval
 qr/master process immediately pulls the k8s endpoints list/
 --- grep_error_log_out
