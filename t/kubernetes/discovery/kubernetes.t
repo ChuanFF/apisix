@@ -200,7 +200,7 @@ deployment:
 discovery:
   kubernetes:
     service:
-        host: "sample.com"
+        host: "localhost"
     shared_size: "2m"
     client:
         token: ${KUBERNETES_CLIENT_TOKEN}
@@ -209,7 +209,7 @@ GET /compare
 {
   "service": {
     "schema": "https",
-    "host": "sample.com",
+    "host": "localhost",
     "port": "${KUBERNETES_SERVICE_PORT}"
   },
   "client": {
@@ -276,14 +276,14 @@ discovery:
   kubernetes:
   - id: "debug"
     service:
-        host: "1.cluster.com"
+        host: "127.0.0.1"
         port: "6445"
     client:
         token: ${KUBERNETES_CLIENT_TOKEN}
   - id: "release"
     service:
         schema: "http"
-        host: "2.cluster.com"
+        host: "127.0.0.2"
         port: "${MyPort}"
     client:
         token: ${KUBERNETES_CLIENT_TOKEN}
@@ -296,7 +296,7 @@ GET /compare
     "id": "debug",
     "service": {
       "schema": "https",
-      "host": "1.cluster.com",
+      "host": "127.0.0.1",
       "port": "6445"
     },
     "client": {
@@ -310,7 +310,7 @@ GET /compare
     "id": "release",
     "service": {
       "schema": "http",
-      "host": "2.cluster.com",
+      "host": "127.0.0.2",
       "port": "${MyPort}"
     },
     "client": {
