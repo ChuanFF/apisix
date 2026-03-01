@@ -526,7 +526,6 @@ GET /dump
 --- yaml_config eval: $::single_yaml_config
 --- extra_init_by_lua_start
     local ngx = ngx
-    local core = require("apisix.core")
 
     local dict = ngx.shared["kubernetes"]
     assert(dict:set("dirty_key", true))
@@ -546,7 +545,6 @@ kubernetes discovery module found dirty data in shared dict, key: dirty_key
 --- yaml_config eval: $::yaml_config
 --- extra_init_by_lua_start
     local ngx = ngx
-    local core = require("apisix.core")
 
     local dict = ngx.shared["kubernetes-first"]
     assert(dict:set("dirty_key", true))
@@ -580,7 +578,6 @@ discovery:
     watch_endpoint_slices: false
 --- extra_init_by_lua_start
     local ngx = ngx
-    local core = require("apisix.core")
 
     local dict = ngx.shared["kubernetes"]
     assert(dict:set("dirty_key", true))
@@ -623,7 +620,6 @@ discovery:
       watch_endpoint_slices: false
 --- extra_init_by_lua_start
     local ngx = ngx
-    local core = require("apisix.core")
 
     local dict = ngx.shared["kubernetes-first"]
     assert(dict:set("dirty_key", true))
