@@ -276,14 +276,14 @@ discovery:
   kubernetes:
   - id: "debug"
     service:
+        schema: "http"
         host: "127.0.0.1"
         port: "6445"
     client:
         token: ${KUBERNETES_CLIENT_TOKEN}
   - id: "release"
     service:
-        schema: "http"
-        host: "127.0.0.2"
+        host: "127.0.0.1"
         port: "${MyPort}"
     client:
         token: ${KUBERNETES_CLIENT_TOKEN}
