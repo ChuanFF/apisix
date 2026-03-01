@@ -529,7 +529,7 @@ local function start_fetch(handle, immediate)
         local retry_interval = 0
         if not ok then
             core.log.error("list_watch failed, kind: ", handle.kind,
-                           ", reason: RuntimeException, message: ", status)
+                    ", reason: ", "RuntimeException", ", message : ", status)
             retry_interval = 40
         elseif not status then
             retry_interval = 40
