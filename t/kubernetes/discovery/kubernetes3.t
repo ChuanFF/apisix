@@ -692,7 +692,7 @@ GET /ready_check
 qr/connect apiserver failed/
 --- grep_error_log_out
 connect apiserver failed
-
+connect apiserver failed
 
 
 === TEST 12: test healthcheck ready
