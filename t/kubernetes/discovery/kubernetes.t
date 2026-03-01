@@ -295,7 +295,7 @@ GET /compare
   {
     "id": "debug",
     "service": {
-      "schema": "https",
+      "schema": "http",
       "host": "127.0.0.1",
       "port": "6445"
     },
@@ -309,8 +309,8 @@ GET /compare
   {
     "id": "release",
     "service": {
-      "schema": "http",
-      "host": "127.0.0.2",
+      "schema": "https",
+      "host": "127.0.0.1",
       "port": "${MyPort}"
     },
     "client": {
